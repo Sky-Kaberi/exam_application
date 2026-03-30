@@ -3,6 +3,17 @@ const appBox = document.getElementById('appBox');
 const verificationState = { mobile: false, email: false };
 const salutations = ['late', 'mr', 'ms', 'mrs', 'dr', 'prof'];
 
+const identificationTypeField = form.elements.identification_type;
+const identificationNoLabel = document.getElementById('identificationNoLabel');
+const identificationNoInput = document.getElementById('identificationNoInput');
+
+function updateIdentificationNoLabel() {
+  const type = (identificationTypeField.value || '').trim();
+  const dynamicLabel = type ? `${type} No.` : 'Identification Number';
+  identificationNoLabel.textContent = dynamicLabel;
+  identificationNoInput.placeholder = dynamicLabel;
+}
+
 async function postData(url, payload) {
   const response = await fetch(url, {
     method: 'POST',
@@ -114,6 +125,9 @@ document.getElementById('sendMobileOtp').addEventListener('click', () => sendOtp
 document.getElementById('verifyMobileOtp').addEventListener('click', () => verifyOtp('mobile'));
 document.getElementById('sendEmailOtp').addEventListener('click', () => sendOtp('email'));
 document.getElementById('verifyEmailOtp').addEventListener('click', () => verifyOtp('email'));
+
+identificationTypeField.addEventListener('change', updateIdentificationNoLabel);
+updateIdentificationNoLabel();
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
