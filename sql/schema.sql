@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS applicants (
     father_name VARCHAR(150) NOT NULL,
     mother_name VARCHAR(150) NOT NULL,
     date_of_birth DATE NULL,
-    gender ENUM('Male', 'Female', 'Other') NOT NULL,
+    gender ENUM('Male', 'Female', 'Third Gender') NOT NULL,
     identification_type VARCHAR(50) NOT NULL,
     identification_no VARCHAR(100) NOT NULL,
     mobile_no VARCHAR(15) NOT NULL UNIQUE,

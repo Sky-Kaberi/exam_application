@@ -38,21 +38,23 @@ declare(strict_types=1);
         <div class="app-box" id="appBox"></div>
         <form id="registrationForm">
             <div class="grid">
-                <div class="field"><label>Candidate Name</label><input type="text" name="candidate_name" required></div>
-                <div class="field"><label>Father's Name</label><input type="text" name="father_name" required></div>
-                <div class="field"><label>Mother's Name</label><input type="text" name="mother_name" required></div>
-                <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
-                <div class="field"><label>Gender</label><select name="gender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
-                <div class="field"><label>Identification Type</label><select name="identification_type" required><option value="">Select</option><option>Aadhaar</option><option>PAN</option><option>Passport</option><option>Voter ID</option></select></div>
+                <div class="field"><label>Candidate Name</label><input type="text" name="candidate_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Max 46 letters/spaces.</small></div>
+                <div class="field"><label>Father's Name</label><input type="text" name="father_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
+                <div class="field"><label>Mother's Name</label><input type="text" name="mother_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
+                <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth" required></div>
+                <div class="field"><label>Gender</label><select name="gender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Third Gender</option></select></div>
+                <div class="field"><label>Identification Type</label><select name="identification_type" required><option value="">Select</option><option>School ID card</option><option>Voter ID</option><option>Passport</option><option>Ration Card with Photograph</option><option>Class 10 admit card with Photograph</option><option>Any other Valid Govt. Identity card With Photograph</option></select></div>
                 <div class="field"><label>Identification Number</label><input type="text" name="identification_no" required></div>
                 <div class="field"><label>Password</label><input type="password" name="password" required></div>
                 <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password" required></div>
+                <div class="field"><label>Enter Security PIN</label><input type="text" name="security_pin" required></div>
                 <div class="field-full">
                     <label>Mobile Number</label>
                     <div class="otp-row">
                         <input type="text" name="mobile_no" maxlength="10" required>
                         <button type="button" id="sendMobileOtp">Send Mobile OTP</button>
                     </div>
+                    <small>By providing mobile number, you agree to receive updates/notifications.</small>
                     <div class="otp-row" style="margin-top:8px;">
                         <input type="text" name="mobile_otp" maxlength="6" placeholder="Enter mobile OTP">
                         <button type="button" class="secondary" id="verifyMobileOtp">Verify Mobile OTP</button>
@@ -65,6 +67,7 @@ declare(strict_types=1);
                         <input type="email" name="email_id" required>
                         <button type="button" id="sendEmailOtp">Send Email OTP</button>
                     </div>
+                    <small>By providing email ID, you agree to receive updates/notifications.</small>
                     <div class="otp-row" style="margin-top:8px;">
                         <input type="text" name="email_otp" maxlength="6" placeholder="Enter email OTP">
                         <button type="button" class="secondary" id="verifyEmailOtp">Verify Email OTP</button>

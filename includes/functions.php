@@ -31,17 +31,47 @@ function generateApplicationId(PDO $db): string
 function validateRegistrationInput(array $data): array
 {
     $errors = [];
+    $namePattern = '/^[A-Za-z ]+$/';
+    $salutationPattern = '/\b(?:late|mr|ms|mrs|dr|prof)\b\.?/i';
+    $allowedGenders = ['Male', 'Female', 'Third Gender'];
+    $allowedIdentificationTypes = [
+        'School ID card',
+        'Voter ID',
+        'Passport',
+        'Ration Card with Photograph',
+        'Class 10 admit card with Photograph',
+        'Any other Valid Govt. Identity card With Photograph',
+    ];
 
-    if (trim($data['candidate_name'] ?? '') === '') {
+    $candidateName = trim((string) ($data['candidate_name'] ?? ''));
+    if ($candidateName === '') {
         $errors['candidate_name'] = 'Candidate name is required.';
+    } elseif (strlen($candidateName) > 46) {
+        $errors['candidate_name'] = 'Candidate name must be maximum 46 characters.';
+    } elseif (!preg_match($namePattern, $candidateName)) {
+        $errors['candidate_name'] = 'Candidate name can only contain letters and spaces.';
     }
 
-    if (trim($data['father_name'] ?? '') === '') {
+    $fatherName = trim((string) ($data['father_name'] ?? ''));
+    if ($fatherName === '') {
         $errors['father_name'] = 'Father name is required.';
+    } elseif (strlen($fatherName) > 46) {
+        $errors['father_name'] = 'Father name must be maximum 46 characters.';
+    } elseif (!preg_match($namePattern, $fatherName)) {
+        $errors['father_name'] = 'Father name can only contain letters and spaces.';
+    } elseif (preg_match($salutationPattern, $fatherName)) {
+        $errors['father_name'] = 'Father name must not include salutations such as Late, Mr., Ms., Mrs., Dr., Prof.';
     }
 
-    if (trim($data['mother_name'] ?? '') === '') {
+    $motherName = trim((string) ($data['mother_name'] ?? ''));
+    if ($motherName === '') {
         $errors['mother_name'] = 'Mother name is required.';
+    } elseif (strlen($motherName) > 46) {
+        $errors['mother_name'] = 'Mother name must be maximum 46 characters.';
+    } elseif (!preg_match($namePattern, $motherName)) {
+        $errors['mother_name'] = 'Mother name can only contain letters and spaces.';
+    } elseif (preg_match($salutationPattern, $motherName)) {
+        $errors['mother_name'] = 'Mother name must not include salutations such as Late, Mr., Ms., Mrs., Dr., Prof.';
     }
 
     if (!preg_match('/^[0-9]{10}$/', $data['mobile_no'] ?? '')) {
@@ -52,15 +82,20 @@ function validateRegistrationInput(array $data): array
         $errors['email_id'] = 'Enter a valid email address.';
     }
 
-    if (!in_array($data['gender'] ?? '', ['Male', 'Female', 'Other'], true)) {
+    if (!in_array($data['gender'] ?? '', $allowedGenders, true)) {
         $errors['gender'] = 'Select a valid gender.';
     }
 
-    if (($data['password'] ?? '') === '' || strlen((string) $data['password']) < 8) {
-        $errors['password'] = 'Password must be at least 8 characters.';
+    if (trim((string) ($data['date_of_birth'] ?? '')) === '') {
+        $errors['date_of_birth'] = 'Date of birth is required.';
     }
 
-    if (($data['password'] ?? '') !== ($data['confirm_password'] ?? '')) {
+    $password = (string) ($data['password'] ?? '');
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*\-]).{8,13}$/', $password)) {
+        $errors['password'] = 'Password must be 8-13 chars and include uppercase, lowercase, number and special character.';
+    }
+
+    if ($password !== (string) ($data['confirm_password'] ?? '')) {
         $errors['confirm_password'] = 'Passwords do not match.';
     }
 
@@ -68,8 +103,12 @@ function validateRegistrationInput(array $data): array
         $errors['identification_no'] = 'Identification number is required.';
     }
 
-    if (trim($data['identification_type'] ?? '') === '') {
-        $errors['identification_type'] = 'Identification type is required.';
+    if (!in_array($data['identification_type'] ?? '', $allowedIdentificationTypes, true)) {
+        $errors['identification_type'] = 'Identification type is invalid.';
+    }
+
+    if (trim((string) ($data['security_pin'] ?? '')) === '') {
+        $errors['security_pin'] = 'Security PIN is required.';
     }
 
     return $errors;
