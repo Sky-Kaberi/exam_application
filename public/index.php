@@ -44,7 +44,7 @@ declare(strict_types=1);
                 <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth" required></div>
                 <div class="field"><label>Gender</label><select name="gender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Third Gender</option></select></div>
                 <div class="field"><label>Identification Type</label><select name="identification_type" required><option value="">Select</option><option>School ID card</option><option>Voter ID</option><option>Passport</option><option>Ration Card with Photograph</option><option>Class 10 admit card with Photograph</option><option>Any other Valid Govt. Identity card With Photograph</option></select></div>
-                <div class="field"><label>Identification Number</label><input type="text" name="identification_no" required></div>
+                <div class="field"><label id="identificationNoLabel">Identification Number</label><input type="text" name="identification_no" id="identificationNoInput" required></div>
                 <div class="field"><label>Password</label><input type="password" name="password" required></div>
                 <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password" required></div>
                 <div class="field"><label>Enter Security PIN</label><input type="text" name="security_pin" required></div>
