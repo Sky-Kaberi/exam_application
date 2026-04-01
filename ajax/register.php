@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+session_start();
+
 require_once __DIR__ . '/../includes/functions.php';
 
 $payload = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
@@ -11,7 +13,7 @@ if ($errors !== []) {
     jsonResponse(['success' => false, 'message' => 'Validation failed.', 'errors' => $errors], 422);
 }
 
-$captchaCheck = verifyTurnstileToken((string) ($payload['captcha_token'] ?? ''), $_SERVER['REMOTE_ADDR'] ?? null);
+$captchaCheck = verifyLocalCaptchaAnswer((string) ($payload['captcha_answer'] ?? ''));
 if (!$captchaCheck['success']) {
     jsonResponse(['success' => false, 'message' => $captchaCheck['message']], 422);
 }
