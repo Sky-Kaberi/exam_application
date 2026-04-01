@@ -99,6 +99,6 @@ $captchaChallenge = createLocalCaptchaChallenge();
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
-<script src="../assets/js/registration.js"></script>
+<script src="../assets/js/registration.js?v=20260401"></script>
 </body>
 </html>

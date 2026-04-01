@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
+function bootstrapJsonErrorHandling(): void
+{
+    ini_set('display_errors', '0');
+
+    set_exception_handler(static function (Throwable $exception): void {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Server error occurred. Please try again.',
+        ], 500);
+    });
+}
+
 function jsonResponse(array $payload, int $status = 200): void
 {
     http_response_code($status);
