@@ -24,6 +24,8 @@ declare(strict_types=1);
         .status { margin-top:8px; font-size:13px; }
         .status.success { color:#0a7a35; }
         .status.error { color:#b42318; }
+        label.error { color:#b42318; font-size:12px; margin-top:4px; }
+        input.error, select.error { border-color:#b42318; background:#fff7f7; }
         .app-box { background:#eef4ff; border:1px dashed #184d9b; padding:14px; border-radius:8px; margin-bottom:20px; display:none; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } }
     </style>
@@ -38,20 +40,20 @@ declare(strict_types=1);
         <div class="app-box" id="appBox"></div>
         <form id="registrationForm">
             <div class="grid">
-                <div class="field"><label>Candidate Name</label><input type="text" name="candidate_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Max 46 letters/spaces.</small></div>
-                <div class="field"><label>Father's Name</label><input type="text" name="father_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
-                <div class="field"><label>Mother's Name</label><input type="text" name="mother_name" maxlength="46" pattern="[A-Za-z ]+" required><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
-                <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth" required></div>
-                <div class="field"><label>Gender</label><select name="gender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Third Gender</option></select></div>
-                <div class="field"><label>Identification Type</label><select name="identification_type" required><option value="">Select</option><option>School ID card</option><option>Voter ID</option><option>Passport</option><option>Ration Card with Photograph</option><option>Class 10 admit card with Photograph</option><option>Any other Valid Govt. Identity card With Photograph</option></select></div>
-                <div class="field"><label id="identificationNoLabel">Identification Number</label><input type="text" name="identification_no" id="identificationNoInput" required></div>
-                <div class="field"><label>Password</label><input type="password" name="password" required></div>
-                <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password" required></div>
-                <div class="field"><label>Enter Security PIN</label><input type="text" name="security_pin" required></div>
+                <div class="field"><label>Candidate Name</label><input type="text" name="candidate_name" maxlength="46"><small>As registered in class 12 Examination. Max 46 letters/spaces.</small></div>
+                <div class="field"><label>Father's Name</label><input type="text" name="father_name" maxlength="46"><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
+                <div class="field"><label>Mother's Name</label><input type="text" name="mother_name" maxlength="46"><small>As registered in class 12 Examination. Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.</small></div>
+                <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
+                <div class="field"><label>Gender</label><select name="gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Third Gender</option></select></div>
+                <div class="field"><label>Identification Type</label><select name="identification_type"><option value="">Select</option><option>School ID card</option><option>Voter ID</option><option>Passport</option><option>Ration Card with Photograph</option><option>Class 10 admit card with Photograph</option><option>Any other Valid Govt. Identity card With Photograph</option></select></div>
+                <div class="field"><label id="identificationNoLabel">Identification Number</label><input type="text" name="identification_no" id="identificationNoInput"></div>
+                <div class="field"><label>Password</label><input type="password" name="password"></div>
+                <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password"></div>
+                <div class="field"><label>Enter Security PIN</label><input type="text" name="security_pin"></div>
                 <div class="field-full">
                     <label>Mobile Number</label>
                     <div class="otp-row">
-                        <input type="text" name="mobile_no" maxlength="10" required>
+                        <input type="text" name="mobile_no" maxlength="10">
                         <button type="button" id="sendMobileOtp">Send Mobile OTP</button>
                     </div>
                     <small>By providing mobile number, you agree to receive updates/notifications.</small>
@@ -64,7 +66,7 @@ declare(strict_types=1);
                 <div class="field-full">
                     <label>Email ID</label>
                     <div class="otp-row">
-                        <input type="email" name="email_id" required>
+                        <input type="email" name="email_id">
                         <button type="button" id="sendEmailOtp">Send Email OTP</button>
                     </div>
                     <small>By providing email ID, you agree to receive updates/notifications.</small>
@@ -81,6 +83,9 @@ declare(strict_types=1);
         </form>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
 <script src="../assets/js/registration.js"></script>
 </body>
 </html>
