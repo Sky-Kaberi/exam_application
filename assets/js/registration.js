@@ -26,11 +26,11 @@ async function postData(url, payload) {
 function setStatus(id, message, ok) {
   const node = document.getElementById(id);
   node.textContent = message;
+  if (!message) {
+    node.className = 'status';
+    return;
+  }
   node.className = `status ${ok ? 'success' : 'error'}`;
-}
-
-function isAlphabeticName(value) {
-  return /^[A-Za-z ]+$/.test(value);
 }
 
 function includesSalutation(value) {
@@ -42,80 +42,141 @@ function includesSalutation(value) {
   return tokens.some((token) => salutations.includes(token));
 }
 
-function validateFormData(formData) {
-  const names = [
-    { key: 'candidate_name', label: 'Candidate name', checkSalutation: false },
-    { key: 'father_name', label: "Father's name", checkSalutation: true },
-    { key: 'mother_name', label: "Mother's name", checkSalutation: true }
-  ];
+$.validator.addMethod(
+  'lettersSpacesOnly',
+  function lettersSpacesOnly(value, element) {
+    return this.optional(element) || /^[A-Za-z ]+$/.test(value);
+  },
+  'Only letters and spaces are allowed.'
+);
 
-  for (const nameField of names) {
-    const value = (formData[nameField.key] || '').trim();
-    if (value.length === 0) {
-      return `${nameField.label} is required.`;
+$.validator.addMethod(
+  'noSalutation',
+  function noSalutation(value, element) {
+    return this.optional(element) || !includesSalutation(value);
+  },
+  'Do not use salutations like Late, Mr., Ms., Mrs., Dr., Prof.'
+);
+
+$.validator.addMethod(
+  'strongPassword',
+  function strongPassword(value, element) {
+    return this.optional(element) || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*\-]).{8,13}$/.test(value);
+  },
+  'Password must be 8-13 chars and include uppercase, lowercase, number and special character (!@#$%^&*-).'
+);
+
+const validator = $('#registrationForm').validate({
+  errorElement: 'label',
+  errorClass: 'error',
+  errorPlacement(error, element) {
+    if (element.parent('.otp-row').length) {
+      error.insertAfter(element.parent());
+      return;
     }
-    if (value.length > 46) {
-      return `${nameField.label} must be maximum 46 characters.`;
+    error.insertAfter(element);
+  },
+  rules: {
+    candidate_name: {
+      required: true,
+      maxlength: 46,
+      lettersSpacesOnly: true
+    },
+    father_name: {
+      required: true,
+      maxlength: 46,
+      lettersSpacesOnly: true,
+      noSalutation: true
+    },
+    mother_name: {
+      required: true,
+      maxlength: 46,
+      lettersSpacesOnly: true,
+      noSalutation: true
+    },
+    date_of_birth: { required: true, dateISO: true },
+    gender: { required: true },
+    identification_type: { required: true },
+    identification_no: { required: true, minlength: 3, maxlength: 50 },
+    password: { required: true, strongPassword: true },
+    confirm_password: { required: true, equalTo: '[name="password"]' },
+    security_pin: { required: true, minlength: 4, maxlength: 20 },
+    mobile_no: { required: true, digits: true, minlength: 10, maxlength: 10 },
+    mobile_otp: { required: true, digits: true, minlength: 6, maxlength: 6 },
+    email_id: { required: true, email: true },
+    email_otp: { required: true, digits: true, minlength: 6, maxlength: 6 }
+  },
+  messages: {
+    candidate_name: {
+      required: 'Candidate name is required.',
+      maxlength: 'Candidate name must be maximum 46 characters.'
+    },
+    father_name: {
+      required: "Father's name is required.",
+      maxlength: "Father's name must be maximum 46 characters."
+    },
+    mother_name: {
+      required: "Mother's name is required.",
+      maxlength: "Mother's name must be maximum 46 characters."
+    },
+    date_of_birth: { required: 'Date of birth is required.' },
+    gender: { required: 'Please select gender.' },
+    identification_type: { required: 'Please select identification type.' },
+    identification_no: { required: 'Identification number is required.' },
+    confirm_password: { equalTo: 'Confirm password must match password.' },
+    security_pin: { required: 'Security PIN is required.' },
+    mobile_no: {
+      required: 'Mobile number is required.',
+      digits: 'Mobile number must contain digits only.',
+      minlength: 'Mobile number must be exactly 10 digits.',
+      maxlength: 'Mobile number must be exactly 10 digits.'
+    },
+    mobile_otp: {
+      required: 'Mobile OTP is required.',
+      digits: 'Mobile OTP must contain digits only.',
+      minlength: 'Mobile OTP must be 6 digits.',
+      maxlength: 'Mobile OTP must be 6 digits.'
+    },
+    email_id: { required: 'Email ID is required.', email: 'Enter a valid email ID.' },
+    email_otp: {
+      required: 'Email OTP is required.',
+      digits: 'Email OTP must contain digits only.',
+      minlength: 'Email OTP must be 6 digits.',
+      maxlength: 'Email OTP must be 6 digits.'
     }
-    if (!isAlphabeticName(value)) {
-      return `${nameField.label} can only contain letters and spaces.`;
-    }
-    if (nameField.checkSalutation && includesSalutation(value)) {
-      return `${nameField.label} must not include salutations like Late, Mr., Ms., Mrs., Dr., Prof.`;
-    }
   }
-
-  const allowedGenders = ['Male', 'Female', 'Third Gender'];
-  if (!allowedGenders.includes(formData.gender)) {
-    return 'Please select a valid gender.';
-  }
-
-  const identificationTypes = [
-    'School ID card',
-    'Voter ID',
-    'Passport',
-    'Ration Card with Photograph',
-    'Class 10 admit card with Photograph',
-    'Any other Valid Govt. Identity card With Photograph'
-  ];
-  if (!identificationTypes.includes(formData.identification_type)) {
-    return 'Please select a valid identification type.';
-  }
-
-  if (!formData.date_of_birth) {
-    return 'Date of birth is required.';
-  }
-
-  const password = formData.password || '';
-  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*\-]).{8,13}$/.test(password)) {
-    return 'Password must be 8-13 chars and include uppercase, lowercase, number and special character (!@#$%^&*-).';
-  }
-
-  if (password !== (formData.confirm_password || '')) {
-    return 'Confirm password must match password.';
-  }
-
-  if (!(formData.security_pin || '').trim()) {
-    return 'Security PIN is required.';
-  }
-
-  return null;
-}
+});
 
 async function sendOtp(channel) {
-  const key = channel === 'mobile' ? 'mobile_no' : 'email_id';
-  const payload = { channel, recipient: form[key].value.trim() };
+  const fieldName = channel === 'mobile' ? 'mobile_no' : 'email_id';
+  const field = form.elements[fieldName];
+
+  if (!validator.element(field)) {
+    return;
+  }
+
+  const payload = { channel, recipient: field.value.trim() };
   const data = await postData('../ajax/send_otp.php', payload);
+  verificationState[channel] = false;
   setStatus(`${channel}Status`, data.message + (data.debug_otp ? ` Demo OTP: ${data.debug_otp}` : ''), data.success);
 }
 
 async function verifyOtp(channel) {
   const recipientKey = channel === 'mobile' ? 'mobile_no' : 'email_id';
   const otpKey = channel === 'mobile' ? 'mobile_otp' : 'email_otp';
+  const recipientField = form.elements[recipientKey];
+  const otpField = form.elements[otpKey];
+
+  const isRecipientValid = validator.element(recipientField);
+  const isOtpValid = validator.element(otpField);
+  if (!isRecipientValid || !isOtpValid) {
+    return;
+  }
+
   const data = await postData('../ajax/verify_otp.php', {
     channel,
-    recipient: form[recipientKey].value.trim(),
-    otp: form[otpKey].value.trim()
+    recipient: recipientField.value.trim(),
+    otp: otpField.value.trim()
   });
   verificationState[channel] = !!data.success;
   setStatus(`${channel}Status`, data.message, data.success);
@@ -132,25 +193,28 @@ updateIdentificationNoLabel();
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
+  if (!validator.form()) {
+    return;
+  }
+
   if (!verificationState.mobile || !verificationState.email) {
     alert('Please verify both mobile number and email before submitting.');
     return;
   }
 
   const formData = Object.fromEntries(new FormData(form).entries());
-  const validationError = validateFormData(formData);
-  if (validationError) {
-    alert(validationError);
-    return;
-  }
   const data = await postData('../ajax/register.php', formData);
 
   if (data.success) {
     appBox.style.display = 'block';
     appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong>`;
     form.reset();
+    validator.resetForm();
     verificationState.mobile = false;
     verificationState.email = false;
+    setStatus('mobileStatus', '', false);
+    setStatus('emailStatus', '', false);
+    updateIdentificationNoLabel();
   } else {
     alert(data.message || 'Registration failed');
   }
