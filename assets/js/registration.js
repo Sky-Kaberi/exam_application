@@ -20,7 +20,30 @@ async function postData(url, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  return response.json();
+
+  const rawBody = await response.text();
+  let data;
+
+  if (rawBody) {
+    try {
+      data = JSON.parse(rawBody);
+    } catch (error) {
+      throw new Error('Server returned an invalid response. Please try again.');
+    }
+  } else {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const message = data && data.message ? data.message : `Request failed with status ${response.status}.`;
+    throw new Error(message);
+  }
+
+  if (!data) {
+    throw new Error('Server returned an empty response. Please try again.');
+  }
+
+  return data;
 }
 
 function setStatus(id, message, ok) {
@@ -160,13 +183,19 @@ async function sendOtp(channel) {
   }
 
   const payload = { channel, recipient: field.value.trim() };
-  const data = await postData('../ajax/send_otp.php', payload);
-  verificationState[channel] = false;
-  let message = data.message || '';
-  if (channel === 'mobile' && data.display_otp) {
-    message = `${message} OTP: ${data.display_otp}`;
+
+  try {
+    const data = await postData('../ajax/send_otp.php', payload);
+    verificationState[channel] = false;
+    let message = data.message || '';
+    if (channel === 'mobile' && data.display_otp) {
+      message = `${message} OTP: ${data.display_otp}`;
+    }
+    setStatus(`${channel}Status`, message, data.success);
+  } catch (error) {
+    verificationState[channel] = false;
+    setStatus(`${channel}Status`, error.message, false);
   }
-  setStatus(`${channel}Status`, message, data.success);
 }
 
 async function verifyOtp(channel) {
@@ -181,13 +210,18 @@ async function verifyOtp(channel) {
     return;
   }
 
-  const data = await postData('../ajax/verify_otp.php', {
-    channel,
-    recipient: recipientField.value.trim(),
-    otp: otpField.value.trim()
-  });
-  verificationState[channel] = !!data.success;
-  setStatus(`${channel}Status`, data.message, data.success);
+  try {
+    const data = await postData('../ajax/verify_otp.php', {
+      channel,
+      recipient: recipientField.value.trim(),
+      otp: otpField.value.trim()
+    });
+    verificationState[channel] = !!data.success;
+    setStatus(`${channel}Status`, data.message, data.success);
+  } catch (error) {
+    verificationState[channel] = false;
+    setStatus(`${channel}Status`, error.message, false);
+  }
 }
 
 document.getElementById('sendMobileOtp').addEventListener('click', () => sendOtp('mobile'));
@@ -211,19 +245,24 @@ form.addEventListener('submit', async (event) => {
   }
 
   const formData = Object.fromEntries(new FormData(form).entries());
-  const data = await postData('../ajax/register.php', formData);
 
-  if (data.success) {
-    appBox.style.display = 'block';
-    appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong>`;
-    form.reset();
-    validator.resetForm();
-    verificationState.mobile = false;
-    verificationState.email = false;
-    setStatus('mobileStatus', '', false);
-    setStatus('emailStatus', '', false);
-    updateIdentificationNoLabel();
-  } else {
-    alert(data.message || 'Registration failed');
+  try {
+    const data = await postData('../ajax/register.php', formData);
+
+    if (data.success) {
+      appBox.style.display = 'block';
+      appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong>`;
+      form.reset();
+      validator.resetForm();
+      verificationState.mobile = false;
+      verificationState.email = false;
+      setStatus('mobileStatus', '', false);
+      setStatus('emailStatus', '', false);
+      updateIdentificationNoLabel();
+    } else {
+      alert(data.message || 'Registration failed');
+    }
+  } catch (error) {
+    alert(error.message || 'Registration failed');
   }
 });
