@@ -11,6 +11,11 @@ if ($errors !== []) {
     jsonResponse(['success' => false, 'message' => 'Validation failed.', 'errors' => $errors], 422);
 }
 
+$captchaCheck = verifyTurnstileToken((string) ($payload['captcha_token'] ?? ''), $_SERVER['REMOTE_ADDR'] ?? null);
+if (!$captchaCheck['success']) {
+    jsonResponse(['success' => false, 'message' => $captchaCheck['message']], 422);
+}
+
 $db = getDb();
 
 $emailVerifiedStmt = $db->prepare('SELECT verified_at FROM otp_verifications WHERE channel = :channel AND recipient = :recipient ORDER BY id DESC LIMIT 1');
