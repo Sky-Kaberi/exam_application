@@ -6,6 +6,7 @@ const salutations = ['late', 'mr', 'ms', 'mrs', 'dr', 'prof'];
 const identificationTypeField = form.elements.identification_type;
 const identificationNoLabel = document.getElementById('identificationNoLabel');
 const identificationNoInput = document.getElementById('identificationNoInput');
+const captchaTokenInput = document.getElementById('captchaToken');
 
 function updateIdentificationNoLabel() {
   const type = (identificationTypeField.value || '').trim();
@@ -31,6 +32,11 @@ function setStatus(id, message, ok) {
     return;
   }
   node.className = `status ${ok ? 'success' : 'error'}`;
+}
+
+function syncCaptchaToken() {
+  const turnstileInput = document.querySelector('input[name="cf-turnstile-response"]');
+  captchaTokenInput.value = turnstileInput ? turnstileInput.value.trim() : '';
 }
 
 function includesSalutation(value) {
@@ -100,7 +106,7 @@ const validator = $('#registrationForm').validate({
     identification_no: { required: true, minlength: 3, maxlength: 50 },
     password: { required: true, strongPassword: true },
     confirm_password: { required: true, equalTo: '[name="password"]' },
-    security_pin: { required: true, minlength: 4, maxlength: 20 },
+    captcha_token: { required: true },
     mobile_no: { required: true, digits: true, minlength: 10, maxlength: 10 },
     mobile_otp: { required: true, digits: true, minlength: 6, maxlength: 6 },
     email_id: { required: true, email: true },
@@ -124,7 +130,7 @@ const validator = $('#registrationForm').validate({
     identification_type: { required: 'Please select identification type.' },
     identification_no: { required: 'Identification number is required.' },
     confirm_password: { equalTo: 'Confirm password must match password.' },
-    security_pin: { required: 'Security PIN is required.' },
+    captcha_token: { required: 'Please complete CAPTCHA verification.' },
     mobile_no: {
       required: 'Mobile number is required.',
       digits: 'Mobile number must contain digits only.',
@@ -196,6 +202,7 @@ updateIdentificationNoLabel();
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  syncCaptchaToken();
 
   if (!validator.form()) {
     return;
@@ -218,8 +225,14 @@ form.addEventListener('submit', async (event) => {
     verificationState.email = false;
     setStatus('mobileStatus', '', false);
     setStatus('emailStatus', '', false);
+    captchaTokenInput.value = '';
+    if (window.turnstile) {
+      window.turnstile.reset();
+    }
     updateIdentificationNoLabel();
   } else {
     alert(data.message || 'Registration failed');
   }
 });
+
+form.addEventListener('change', syncCaptchaToken);
