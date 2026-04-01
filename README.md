@@ -11,9 +11,9 @@ Step 1 registration scaffold built with PHP, MySQL, JavaScript, and AJAX.
 ## Run locally
 1. Import `sql/schema.sql` into MySQL.
 2. Update database credentials in `includes/config.php`.
-3. Configure Cloudflare Turnstile in `includes/config.php`:
-   - `TURNSTILE_SITE_KEY`
-   - `TURNSTILE_SECRET_KEY`
+3. Optional: adjust local math CAPTCHA range in `includes/config.php`:
+   - `CAPTCHA_MIN_VALUE`
+   - `CAPTCHA_MAX_VALUE`
 4. Start PHP server:
    ```bash
    php -S 127.0.0.1:8000 -t public
@@ -22,3 +22,6 @@ Step 1 registration scaffold built with PHP, MySQL, JavaScript, and AJAX.
 
 ## Demo OTP behavior
 This scaffold writes OTP values to `logs/otp.log` for development/testing. Replace that section with actual SMS and email gateway integrations in production.
+
+## CAPTCHA behavior
+This scaffold uses a built-in math CAPTCHA (no third-party dependency). The challenge is session-based and validated during registration submit.

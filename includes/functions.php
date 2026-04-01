@@ -107,11 +107,44 @@ function validateRegistrationInput(array $data): array
         $errors['identification_type'] = 'Identification type is invalid.';
     }
 
-    if (trim((string) ($data['captcha_token'] ?? '')) === '') {
-        $errors['captcha_token'] = 'CAPTCHA verification is required.';
+    if (trim((string) ($data['captcha_answer'] ?? '')) === '') {
+        $errors['captcha_answer'] = 'CAPTCHA answer is required.';
     }
 
     return $errors;
+}
+
+function createLocalCaptchaChallenge(): array
+{
+    $left = random_int(CAPTCHA_MIN_VALUE, CAPTCHA_MAX_VALUE);
+    $right = random_int(CAPTCHA_MIN_VALUE, CAPTCHA_MAX_VALUE);
+    $_SESSION['captcha_answer'] = (string) ($left + $right);
+
+    return [
+        'question' => "What is {$left} + {$right}?",
+    ];
+}
+
+function verifyLocalCaptchaAnswer(string $answer): array
+{
+    $expected = (string) ($_SESSION['captcha_answer'] ?? '');
+    if ($expected === '') {
+        return [
+            'success' => false,
+            'message' => 'CAPTCHA session expired. Please refresh and try again.',
+        ];
+    }
+
+    if (trim($answer) !== $expected) {
+        return [
+            'success' => false,
+            'message' => 'CAPTCHA answer is incorrect.',
+        ];
+    }
+
+    unset($_SESSION['captcha_answer']);
+
+    return ['success' => true, 'message' => 'CAPTCHA verified.'];
 }
 
 function createOtpRecord(PDO $db, string $channel, string $recipient): array
@@ -190,54 +223,4 @@ function verifyOtpRecord(PDO $db, string $channel, string $recipient, string $ot
     $update->execute(['id' => $record['id']]);
 
     return true;
-}
-
-function verifyTurnstileToken(string $token, ?string $remoteIp = null): array
-{
-    if (TURNSTILE_SECRET_KEY === '') {
-        return [
-            'success' => false,
-            'message' => 'CAPTCHA secret is not configured.',
-        ];
-    }
-
-    if (trim($token) === '') {
-        return [
-            'success' => false,
-            'message' => 'CAPTCHA token is missing.',
-        ];
-    }
-
-    $payload = http_build_query([
-        'secret' => TURNSTILE_SECRET_KEY,
-        'response' => $token,
-        'remoteip' => $remoteIp ?? '',
-    ]);
-
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-            'content' => $payload,
-            'timeout' => 8,
-        ],
-    ]);
-
-    $response = file_get_contents('https://challenges.cloudflare.com/turnstile/v0/siteverify', false, $context);
-    if ($response === false) {
-        return [
-            'success' => false,
-            'message' => 'Unable to reach CAPTCHA verification service.',
-        ];
-    }
-
-    $decoded = json_decode($response, true);
-    if (!is_array($decoded) || !($decoded['success'] ?? false)) {
-        return [
-            'success' => false,
-            'message' => 'CAPTCHA verification failed. Please try again.',
-        ];
-    }
-
-    return ['success' => true, 'message' => 'CAPTCHA verified.'];
 }

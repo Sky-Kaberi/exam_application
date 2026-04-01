@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
+session_start();
+
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/config.php';
+
+$captchaChallenge = createLocalCaptchaChallenge();
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,9 +58,8 @@ require_once __DIR__ . '/../includes/config.php';
                 <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password"></div>
                 <div class="field-full">
                     <label>CAPTCHA Verification</label>
-                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars(TURNSTILE_SITE_KEY, ENT_QUOTES, 'UTF-8') ?>"></div>
-                    <input type="hidden" name="captcha_token" id="captchaToken">
-                    <small>Complete CAPTCHA to confirm you're a real human user.</small>
+                    <input type="text" name="captcha_answer" maxlength="3" placeholder="<?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>">
+                    <small>Solve this simple math CAPTCHA to confirm you're a real human user. Refresh the page for a new challenge.</small>
                 </div>
                 <div class="field-full">
                     <label>Mobile Number</label>
@@ -95,7 +99,6 @@ require_once __DIR__ . '/../includes/config.php';
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script src="../assets/js/registration.js"></script>
 </body>
 </html>
