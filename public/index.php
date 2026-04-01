@@ -49,7 +49,7 @@ declare(strict_types=1);
                 <div class="field"><label id="identificationNoLabel">Identification Number</label><input type="text" name="identification_no" id="identificationNoInput"></div>
                 <div class="field"><label>Password</label><input type="password" name="password"></div>
                 <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password"></div>
-                <div class="field"><label>Enter Security PIN</label><input type="text" name="security_pin"></div>
+                <div class="field"><label>Enter CAPTCHA</label><input type="text" name="security_pin"></div>
                 <div class="field-full">
                     <label>Mobile Number</label>
                     <div class="otp-row">
@@ -57,6 +57,7 @@ declare(strict_types=1);
                         <button type="button" id="sendMobileOtp">Send Mobile OTP</button>
                     </div>
                     <small>By providing mobile number, you agree to receive updates/notifications.</small>
+                    <small>SMS gateway is unavailable in this environment, so OTP will be shown on screen after sending.</small>
                     <div class="otp-row" style="margin-top:8px;">
                         <input type="text" name="mobile_otp" maxlength="6" placeholder="Enter mobile OTP">
                         <button type="button" class="secondary" id="verifyMobileOtp">Verify Mobile OTP</button>
@@ -70,6 +71,7 @@ declare(strict_types=1);
                         <button type="button" id="sendEmailOtp">Send Email OTP</button>
                     </div>
                     <small>By providing email ID, you agree to receive updates/notifications.</small>
+                    <small>You can verify mobile OTP and email OTP in any order.</small>
                     <div class="otp-row" style="margin-top:8px;">
                         <input type="text" name="email_otp" maxlength="6" placeholder="Enter email OTP">
                         <button type="button" class="secondary" id="verifyEmailOtp">Verify Email OTP</button>

@@ -158,7 +158,11 @@ async function sendOtp(channel) {
   const payload = { channel, recipient: field.value.trim() };
   const data = await postData('../ajax/send_otp.php', payload);
   verificationState[channel] = false;
-  setStatus(`${channel}Status`, data.message + (data.debug_otp ? ` Demo OTP: ${data.debug_otp}` : ''), data.success);
+  let message = data.message || '';
+  if (channel === 'mobile' && data.display_otp) {
+    message = `${message} OTP: ${data.display_otp}`;
+  }
+  setStatus(`${channel}Status`, message, data.success);
 }
 
 async function verifyOtp(channel) {

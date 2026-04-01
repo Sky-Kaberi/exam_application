@@ -140,11 +140,32 @@ function createOtpRecord(PDO $db, string $channel, string $recipient): array
     $logLine = sprintf("[%s] %s OTP for %s is %s\n", date('c'), strtoupper($channel), $recipient, $otp);
     file_put_contents(__DIR__ . '/../logs/otp.log', $logLine, FILE_APPEND);
 
+    if ($channel === 'email') {
+        $emailSent = sendEmailOtp($recipient, $otp);
+
+        return [
+            'success' => $emailSent,
+            'message' => $emailSent
+                ? 'OTP sent to email successfully.'
+                : 'Unable to send OTP email right now. Please retry.',
+        ];
+    }
+
     return [
         'success' => true,
-        'message' => 'OTP generated successfully. Check configured gateway/log.',
-        'debug_otp' => $otp,
+        'message' => 'OTP generated successfully.',
+        'display_otp' => $otp,
     ];
+}
+
+function sendEmailOtp(string $recipient, string $otp): bool
+{
+    $subject = 'Your Email OTP for Exam Application';
+    $message = "Your OTP for exam application registration is: {$otp}. It is valid for " . OTP_EXPIRY_MINUTES . ' minutes.';
+    $headers = 'From: noreply@exam-application.local' . "\r\n"
+        . 'Content-Type: text/plain; charset=UTF-8';
+
+    return mail($recipient, $subject, $message, $headers);
 }
 
 function verifyOtpRecord(PDO $db, string $channel, string $recipient, string $otp): bool
