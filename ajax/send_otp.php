@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/functions.php';
 
-$payload = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+$payload = decodeJsonRequestBody();
 $channel = $payload['channel'] ?? '';
 $recipient = trim((string) ($payload['recipient'] ?? ''));
 

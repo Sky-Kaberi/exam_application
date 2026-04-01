@@ -8,8 +8,32 @@ function jsonResponse(array $payload, int $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json');
-    echo json_encode($payload, JSON_THROW_ON_ERROR);
+    $json = json_encode($payload);
+    if ($json === false) {
+        $json = '{"success":false,"message":"Unable to encode JSON response."}';
+        http_response_code(500);
+    }
+    echo $json;
     exit;
+}
+
+function decodeJsonRequestBody(): array
+{
+    $rawBody = file_get_contents('php://input');
+    if (!is_string($rawBody) || trim($rawBody) === '') {
+        return [];
+    }
+
+    $payload = json_decode($rawBody, true);
+    if (!is_array($payload)) {
+        jsonResponse(['success' => false, 'message' => 'Invalid JSON payload.'], 400);
+    }
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        jsonResponse(['success' => false, 'message' => 'Invalid JSON payload.'], 400);
+    }
+
+    return $payload;
 }
 
 function generateOtp(): string
