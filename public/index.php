@@ -34,6 +34,7 @@ $captchaChallenge = createLocalCaptchaChallenge();
         label.error { color:#b42318; font-size:12px; margin-top:4px; }
         input.error, select.error { border-color:#b42318; background:#fff7f7; }
         .app-box { background:#eef4ff; border:1px dashed #184d9b; padding:14px; border-radius:8px; margin-bottom:20px; display:none; }
+        .captcha-expression { display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:10px 16px; border-radius:10px; background:#f2f6ff; border:1px solid #c8d7f7; color:#123c7a; font-size:22px; font-weight:700; letter-spacing:.5px; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } }
     </style>
 </head>
@@ -56,11 +57,6 @@ $captchaChallenge = createLocalCaptchaChallenge();
                 <div class="field"><label id="identificationNoLabel">Identification Number</label><input type="text" name="identification_no" id="identificationNoInput"></div>
                 <div class="field"><label>Password</label><input type="password" name="password"></div>
                 <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password"></div>
-                <div class="field-full">
-                    <label>CAPTCHA Verification</label>
-                    <input type="text" name="captcha_answer" maxlength="3" placeholder="<?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>">
-                    <small>Solve this simple math CAPTCHA to confirm you're a real human user. Refresh the page for a new challenge.</small>
-                </div>
                 <div class="field-full">
                     <label>Mobile Number</label>
                     <div class="otp-row">
@@ -91,6 +87,14 @@ $captchaChallenge = createLocalCaptchaChallenge();
                 </div>
                 <div class="field-full">
                     <button type="submit" id="submitBtn">Complete Step 1 Registration</button>
+                </div>
+                <div class="field-full">
+                    <label>CAPTCHA Verification</label>
+                    <div class="captcha-expression" aria-label="CAPTCHA challenge">
+                        <?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <input type="text" name="captcha_answer" maxlength="3" placeholder="Enter CAPTCHA answer">
+                    <small>Solve this simple math CAPTCHA to confirm you're a real human user. Refresh the page for a new challenge.</small>
                 </div>
             </div>
         </form>
