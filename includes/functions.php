@@ -62,9 +62,7 @@ function generateOtp(): string
 
 function generateApplicationIdFromId(int $id): string
 {
-    $yearSuffix = date('y');
-
-    return $yearSuffix . '10' . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
+    return '2510' . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
 }
 
 function validateRegistrationInput(array $data): array
