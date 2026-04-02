@@ -60,15 +60,11 @@ function generateOtp(): string
     return (string) random_int(100000, 999999);
 }
 
-function generateApplicationId(PDO $db): string
+function generateApplicationIdFromId(int $id): string
 {
-    do {
-        $candidate = APPLICATION_PREFIX . date('Ymd') . random_int(1000, 9999);
-        $stmt = $db->prepare('SELECT COUNT(*) FROM applicants WHERE application_id = :application_id');
-        $stmt->execute(['application_id' => $candidate]);
-    } while ((int) $stmt->fetchColumn() > 0);
+    $yearSuffix = date('y');
 
-    return $candidate;
+    return $yearSuffix . '10' . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
 }
 
 function validateRegistrationInput(array $data): array

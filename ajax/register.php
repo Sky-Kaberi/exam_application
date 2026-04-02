@@ -42,26 +42,47 @@ if ((int) $check->fetchColumn() > 0) {
     jsonResponse(['success' => false, 'message' => 'Email ID or mobile number already registered.'], 409);
 }
 
-$applicationId = generateApplicationId($db);
-$stmt = $db->prepare('INSERT INTO applicants (
-    application_id, candidate_name, father_name, mother_name, date_of_birth, gender,
-    identification_type, identification_no, mobile_no, email_id, password_hash, email_verified_at, mobile_verified_at
-) VALUES (
-    :application_id, :candidate_name, :father_name, :mother_name, :date_of_birth, :gender,
-    :identification_type, :identification_no, :mobile_no, :email_id, :password_hash, NOW(), NOW()
-)');
-$stmt->execute([
-    'application_id' => $applicationId,
-    'candidate_name' => $payload['candidate_name'],
-    'father_name' => $payload['father_name'],
-    'mother_name' => $payload['mother_name'],
-    'date_of_birth' => $payload['date_of_birth'] ?: null,
-    'gender' => $payload['gender'],
-    'identification_type' => $payload['identification_type'],
-    'identification_no' => $payload['identification_no'],
-    'mobile_no' => $payload['mobile_no'],
-    'email_id' => $payload['email_id'],
-    'password_hash' => password_hash((string) $payload['password'], PASSWORD_DEFAULT),
-]);
+$db->beginTransaction();
+
+try {
+    $placeholderApplicationId = 'TMP' . bin2hex(random_bytes(8));
+    $stmt = $db->prepare('INSERT INTO applicants (
+        application_id, candidate_name, father_name, mother_name, date_of_birth, gender,
+        identification_type, identification_no, mobile_no, email_id, password_hash, email_verified_at, mobile_verified_at
+    ) VALUES (
+        :application_id, :candidate_name, :father_name, :mother_name, :date_of_birth, :gender,
+        :identification_type, :identification_no, :mobile_no, :email_id, :password_hash, NOW(), NOW()
+    )');
+    $stmt->execute([
+        'application_id' => $placeholderApplicationId,
+        'candidate_name' => $payload['candidate_name'],
+        'father_name' => $payload['father_name'],
+        'mother_name' => $payload['mother_name'],
+        'date_of_birth' => $payload['date_of_birth'] ?: null,
+        'gender' => $payload['gender'],
+        'identification_type' => $payload['identification_type'],
+        'identification_no' => $payload['identification_no'],
+        'mobile_no' => $payload['mobile_no'],
+        'email_id' => $payload['email_id'],
+        'password_hash' => password_hash((string) $payload['password'], PASSWORD_DEFAULT),
+    ]);
+
+    $insertedId = (int) $db->lastInsertId();
+    $applicationId = generateApplicationIdFromId($insertedId);
+
+    $updateStmt = $db->prepare('UPDATE applicants SET application_id = :application_id WHERE id = :id');
+    $updateStmt->execute([
+        'application_id' => $applicationId,
+        'id' => $insertedId,
+    ]);
+
+    $db->commit();
+} catch (Throwable $exception) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+
+    throw $exception;
+}
 
 jsonResponse(['success' => true, 'application_id' => $applicationId, 'message' => 'Step 1 registration completed.']);
