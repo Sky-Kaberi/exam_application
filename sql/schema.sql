@@ -22,6 +22,27 @@ CREATE TABLE IF NOT EXISTS applicants (
     INDEX idx_identification (identification_type, identification_no)
 );
 
+CREATE TABLE IF NOT EXISTS applicant_step2_basic (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    applicant_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    nationality VARCHAR(30) NOT NULL DEFAULT 'Indian',
+    domicile VARCHAR(30) NOT NULL,
+    religion VARCHAR(30) NOT NULL,
+    category VARCHAR(30) NOT NULL,
+    sub_category_details TEXT NULL,
+    pwd_status ENUM('Yes', 'No') NOT NULL,
+    disability_type VARCHAR(100) NULL,
+    disability_percentage DECIMAL(5,2) NULL,
+    qualifying_examination VARCHAR(255) NOT NULL,
+    pass_status VARCHAR(30) NOT NULL,
+    year_of_passing VARCHAR(10) NOT NULL,
+    institute_name_address TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_step2_basic_applicant FOREIGN KEY (applicant_id) REFERENCES applicants(id) ON DELETE CASCADE,
+    INDEX idx_step2_basic_lookup (applicant_id, domicile, category)
+);
+
 CREATE TABLE IF NOT EXISTS otp_verifications (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     channel ENUM('email', 'mobile') NOT NULL,

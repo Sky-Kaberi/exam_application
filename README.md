@@ -1,12 +1,15 @@
 # Exam Application
 
-Step 1 registration scaffold built with PHP, MySQL, JavaScript, and AJAX.
+Two-step application workflow built with PHP, MySQL, JavaScript, and AJAX.
 
-## Included in this step
-- MySQL schema for applicants and OTP verification.
-- Registration UI for basic applicant data.
-- OTP send/verify endpoints for email and mobile.
-- Application ID generation after both OTP channels are verified.
+## Included features
+- Step 1 registration with OTP verification for mobile and email.
+- Deterministic application ID generation format: `2510` + `LPAD(id, 7, '0')`.
+- Post-registration redirect to login with highlighted newly generated application number.
+- Login using application number and password from Step 1.
+- Session-based redirect to Step 2 after successful login.
+- Step 2 multi-tab form (Basic Info, Corresponding Address, Selection of Courses, Image Upload).
+- Step 2 Basic Info save/load with conditional validation and persistence.
 
 ## Run locally
 1. Import `sql/schema.sql` into MySQL.
@@ -18,7 +21,7 @@ Step 1 registration scaffold built with PHP, MySQL, JavaScript, and AJAX.
    ```bash
    php -S 127.0.0.1:8000 -t public
    ```
-5. Open `http://127.0.0.1:8000`.
+5. Open `http://127.0.0.1:8000` for Step 1 registration.
 
 ## Demo OTP behavior
 This scaffold writes OTP values to `logs/otp.log` for development/testing. Replace that section with actual SMS and email gateway integrations in production.
