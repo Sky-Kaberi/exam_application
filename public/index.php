@@ -86,15 +86,15 @@ $captchaChallenge = createLocalCaptchaChallenge();
                     <div class="status" id="emailStatus"></div>
                 </div>
                 <div class="field-full">
-                    <button type="submit" id="submitBtn">Complete Step 1 Registration</button>
-                </div>
-                <div class="field-full">
                     <label>CAPTCHA Verification</label>
                     <div class="captcha-expression" aria-label="CAPTCHA challenge">
                         <?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>
                     </div>
                     <input type="text" name="captcha_answer" maxlength="3" placeholder="Enter CAPTCHA answer">
                     <small>Solve this simple math CAPTCHA to confirm you're a real human user. Refresh the page for a new challenge.</small>
+                </div>
+                <div class="field-full">
+                    <button type="submit" id="submitBtn">Complete Step 1 Registration</button>
                 </div>
             </div>
         </form>
