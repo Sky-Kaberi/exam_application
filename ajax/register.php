@@ -45,7 +45,7 @@ if ((int) $check->fetchColumn() > 0) {
 $db->beginTransaction();
 
 try {
-    $placeholderApplicationId = 'TMP' . bin2hex(random_bytes(8));
+    $placeholderApplicationId = 'TMP' . $payload['mobile_no'];
     $stmt = $db->prepare('INSERT INTO applicants (
         application_id, candidate_name, father_name, mother_name, date_of_birth, gender,
         identification_type, identification_no, mobile_no, email_id, password_hash, email_verified_at, mobile_verified_at
@@ -85,4 +85,11 @@ try {
     throw $exception;
 }
 
-jsonResponse(['success' => true, 'application_id' => $applicationId, 'message' => 'Step 1 registration completed.']);
+$_SESSION['new_application_id'] = $applicationId;
+
+jsonResponse([
+    'success' => true,
+    'application_id' => $applicationId,
+    'redirect_to' => '../public/login.php?application_id=' . urlencode($applicationId),
+    'message' => 'Step 1 registration completed.',
+]);

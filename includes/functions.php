@@ -62,7 +62,139 @@ function generateOtp(): string
 
 function generateApplicationIdFromId(int $id): string
 {
-    return '2510' . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
+    return APPLICATION_PREFIX . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
+}
+
+function loginApplicantSession(array $applicant): void
+{
+    ensureSessionStarted();
+    session_regenerate_id(true);
+    $_SESSION['applicant_auth'] = [
+        'id' => (int) $applicant['id'],
+        'application_id' => (string) $applicant['application_id'],
+        'candidate_name' => (string) $applicant['candidate_name'],
+    ];
+}
+
+function logoutApplicantSession(): void
+{
+    ensureSessionStarted();
+    unset($_SESSION['applicant_auth']);
+}
+
+function getLoggedInApplicantSession(): ?array
+{
+    ensureSessionStarted();
+    $auth = $_SESSION['applicant_auth'] ?? null;
+
+    if (!is_array($auth) || !isset($auth['id'], $auth['application_id'])) {
+        return null;
+    }
+
+    return $auth;
+}
+
+function requireApplicantLoginForPage(string $redirectPath = 'login.php'): array
+{
+    $applicant = getLoggedInApplicantSession();
+    if ($applicant !== null) {
+        return $applicant;
+    }
+
+    header('Location: ' . $redirectPath);
+    exit;
+}
+
+function requireApplicantLoginForJson(): array
+{
+    $applicant = getLoggedInApplicantSession();
+    if ($applicant !== null) {
+        return $applicant;
+    }
+
+    jsonResponse(['success' => false, 'message' => 'Login required.'], 401);
+}
+
+function getCategoryOptionsByDomicile(string $domicile): array
+{
+    if ($domicile === 'West Bengal') {
+        return ['General', 'SC', 'ST', 'OBC-A', 'OBC-B', 'General-EWS'];
+    }
+
+    if ($domicile === 'Others') {
+        return ['General', 'SC', 'ST', 'OBC'];
+    }
+
+    return [];
+}
+
+function validateStep2BasicInput(array $data): array
+{
+    $errors = [];
+    $nationality = trim((string) ($data['nationality'] ?? 'Indian'));
+    $domicile = trim((string) ($data['domicile'] ?? ''));
+    $religion = trim((string) ($data['religion'] ?? ''));
+    $category = trim((string) ($data['category'] ?? ''));
+    $pwdStatus = trim((string) ($data['pwd_status'] ?? 'No'));
+    $disabilityType = trim((string) ($data['disability_type'] ?? ''));
+    $disabilityPercentage = trim((string) ($data['disability_percentage'] ?? ''));
+    $qualifyingExam = trim((string) ($data['qualifying_examination'] ?? ''));
+    $passStatus = trim((string) ($data['pass_status'] ?? ''));
+    $yearOfPassing = trim((string) ($data['year_of_passing'] ?? ''));
+    $instituteAddress = trim((string) ($data['institute_name_address'] ?? ''));
+
+    if ($nationality !== 'Indian') {
+        $errors['nationality'] = 'Only Indian nationality is allowed.';
+    }
+
+    if (!in_array($domicile, ['West Bengal', 'Others'], true)) {
+        $errors['domicile'] = 'Please select a valid domicile.';
+    }
+
+    $allowedReligions = ['Hinduism', 'Islam', 'Christianity', 'Buddhism', 'Sikhism', 'Jainism', 'Other'];
+    if (!in_array($religion, $allowedReligions, true)) {
+        $errors['religion'] = 'Please select a valid religion.';
+    }
+
+    $allowedCategories = getCategoryOptionsByDomicile($domicile);
+    if (!in_array($category, $allowedCategories, true)) {
+        $errors['category'] = 'Please select a valid category for the selected domicile.';
+    }
+
+    if (!in_array($pwdStatus, ['Yes', 'No'], true)) {
+        $errors['pwd_status'] = 'Please select PwD status.';
+    }
+
+    if ($pwdStatus === 'Yes') {
+        if (!in_array($disabilityType, ['Locomotor disability in lower limb', 'Others'], true)) {
+            $errors['disability_type'] = 'Please select type of disability.';
+        }
+        if ($disabilityPercentage === '' || !is_numeric($disabilityPercentage)) {
+            $errors['disability_percentage'] = 'Enter a valid disability percentage.';
+        }
+    }
+
+    if ($qualifyingExam === '') {
+        $errors['qualifying_examination'] = 'Qualifying examination is required.';
+    }
+
+    if ($passStatus !== 'Passed') {
+        $errors['pass_status'] = 'Pass Status must be Passed.';
+    }
+
+    if ($yearOfPassing === '') {
+        $errors['year_of_passing'] = 'Year of Passing is required.';
+    } elseif (!preg_match('/^\d{4}$/', $yearOfPassing)) {
+        $errors['year_of_passing'] = 'Enter a valid 4-digit year.';
+    }
+
+    if ($instituteAddress === '') {
+        $errors['institute_name_address'] = 'Institute Name and address is required.';
+    } elseif (mb_strlen($instituteAddress) < 5) {
+        $errors['institute_name_address'] = 'Please enter the full institute name and address.';
+    }
+
+    return $errors;
 }
 
 function validateRegistrationInput(array $data): array

@@ -251,14 +251,10 @@ form.addEventListener('submit', async (event) => {
 
     if (data.success) {
       appBox.style.display = 'block';
-      appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong>`;
-      form.reset();
-      validator.resetForm();
-      verificationState.mobile = false;
-      verificationState.email = false;
-      setStatus('mobileStatus', '', false);
-      setStatus('emailStatus', '', false);
-      updateIdentificationNoLabel();
+      appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong><br>Redirecting to login...`;
+      window.setTimeout(() => {
+        window.location.href = data.redirect_to || `../public/login.php?application_id=${encodeURIComponent(data.application_id)}`;
+      }, 700);
     } else {
       alert(data.message || 'Registration failed');
     }
