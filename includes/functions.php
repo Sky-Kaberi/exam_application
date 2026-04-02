@@ -257,14 +257,43 @@ function createOtpRecord(PDO $db, string $channel, string $recipient): array
 
 function sendEmailOtp(string $recipient, string $otp): bool
 {
+    include_once("../class/class.phpmailer.php");
+
     $subject = 'Your Email OTP for Exam Application';
-    $message = "Your OTP for exam application registration is: {$otp}. It is valid for " . OTP_EXPIRY_MINUTES . ' minutes.';
-    $headers = 'From: noreply@exam-application.local' . "\r\n"
-        . 'Content-Type: text/plain; charset=UTF-8';
+    $content = "Your OTP for exam application registration is: {$otp}. It is valid for " . OTP_EXPIRY_MINUTES . " minutes.";
 
-    return mail($recipient, $subject, $message, $headers);
+    try {
+        $mail = new PHPMailer();
+
+        // SMTP SETTINGS (IMPORTANT)
+        $mail_1 = new PHPMailer();
+
+		$mail_1->IsSMTP();
+		
+		// REQUIRED SETTINGS
+		//$mail_1->Host = "localhost"; // try this first (IIS/Plesk often works)
+		//$mail_1->SMTPAuth = false;   // try without auth first
+		
+		$mail_1->From = "admin@wbjeeb.in";
+		$mail_1->FromName = "WBJEEB";
+		$mail_1->AddAddress($recipient);
+		
+		$mail_1->Subject = $subject;
+		$mail_1->IsHTML(false);
+		$mail_1->Body = $content;
+		
+		if (!$mail_1->Send()) {
+			error_log("Mailer Error: " . $mail_1->ErrorInfo);
+			return false;
+		}
+		
+		return true;
+		
+    } catch (Exception $e) {
+        error_log("Mailer Exception: " . $e->getMessage());
+        return false;
+    }
 }
-
 function verifyOtpRecord(PDO $db, string $channel, string $recipient, string $otp): bool
 {
     try {
