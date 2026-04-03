@@ -62,8 +62,15 @@ function renderSection(title, fields, editTab) {
   return `<div class="section"><h3>${title}</h3><div class="row">${rows}</div><div style="margin-top:10px;"><a href="step2.php?tab=${editTab}" class="secondary">Edit</a></div></div>`;
 }
 
+function cacheBustUrl(path, token) {
+  if (!path) return '';
+  const separator = path.includes('?') ? '&' : '?';
+  return `../public/${path}${separator}t=${encodeURIComponent(token)}`;
+}
+
 async function loadPreview() {
-  const response = await fetch(`../ajax/preview.php?t=${Date.now()}`, { cache: 'no-store' });
+  const cacheToken = Date.now();
+  const response = await fetch(`../ajax/preview.php?t=${cacheToken}`, { cache: 'no-store' });
   const data = await response.json();
 
   if (!response.ok || !data.success) {
@@ -98,7 +105,7 @@ async function loadPreview() {
     renderSection('Step 2 - Course Selection', [
       ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city]
     ], 'courses'),
-    `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="../public/${d.images.photo_path}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="../public/${d.images.signature_path}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
+    `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="${cacheBustUrl(d.images.photo_path, cacheToken)}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="${cacheBustUrl(d.images.signature_path, cacheToken)}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
   ].join('');
 }
 
