@@ -27,9 +27,14 @@ if (!$applicant || !password_verify($password, (string) $applicant['password_has
 
 loginApplicantSession($applicant);
 unset($_SESSION['new_application_id']);
+$progress = getApplicantProgress($db, (int) $applicant['id']);
+$resumeTab = detectResumeTab($progress);
+$redirect = $resumeTab === 'preview'
+    ? '../public/step3_preview.php'
+    : '../public/step2.php?tab=' . urlencode($resumeTab);
 
 jsonResponse([
     'success' => true,
     'message' => 'Login successful.',
-    'redirect_to' => '../public/step2.php',
+    'redirect_to' => $redirect,
 ]);
