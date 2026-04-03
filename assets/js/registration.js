@@ -250,11 +250,15 @@ form.addEventListener('submit', async (event) => {
     const data = await postData('../ajax/register.php', formData);
 
     if (data.success) {
+      const applicationId = (data.application_id || '').trim();
+      const loginUrl = new URL('../public/login.php', window.location.href);
+      if (applicationId !== '') {
+        loginUrl.searchParams.set('application_id', applicationId);
+      }
+
       appBox.style.display = 'block';
-      appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${data.application_id}</strong><br>Redirecting to login...`;
-      window.setTimeout(() => {
-        window.location.href = data.redirect_to || `../public/login.php?application_id=${encodeURIComponent(data.application_id)}`;
-      }, 700);
+      appBox.innerHTML = `<strong>Application Registered.</strong><br>Application ID: <strong>${applicationId}</strong><br>Redirecting to login...`;
+      window.location.assign(loginUrl.toString());
     } else {
       alert(data.message || 'Registration failed');
     }
