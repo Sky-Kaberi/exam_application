@@ -86,7 +86,8 @@ function generateOtp(): string
 
 function generateApplicationIdFromId(int $id): string
 {
-    return APPLICATION_PREFIX . str_pad((string) $id, 7, '0', STR_PAD_LEFT);
+    $numericSegmentLength = APPLICATION_ID_TOTAL_LENGTH - strlen(APPLICATION_PREFIX);
+    return APPLICATION_PREFIX . str_pad((string) $id, $numericSegmentLength, '0', STR_PAD_LEFT);
 }
 
 function loginApplicantSession(array $applicant): void
