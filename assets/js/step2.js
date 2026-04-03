@@ -327,18 +327,25 @@ async function loadCourseInfo() {
   buildSelect(coursesForm.elements.exam_city, courseOptions.exam_cities, data.data.exam_city || '');
 }
 
-function renderExistingImage(id, path, label) {
+function renderExistingImage(id, path, label, cacheToken = '') {
   const node = document.getElementById(id);
-  node.innerHTML = path ? `<p class="muted">Saved ${label}</p><img src="../public/${path}" alt="${label}">` : '';
+  if (!path) {
+    node.innerHTML = '';
+    return;
+  }
+
+  const token = cacheToken ? `?v=${encodeURIComponent(cacheToken)}` : '';
+  node.innerHTML = `<p class="muted">Saved ${label}</p><img src="../public/${path}${token}" alt="${label}">`;
 }
 
 async function loadImagesInfo() {
-  const response = await fetch('../ajax/step2_images.php');
+  const response = await fetch('../ajax/step2_images.php', { cache: 'no-store' });
   if (!response.ok) throw new Error('Unable to load image details.');
   const data = await response.json();
   if (!data.success || !data.data) throw new Error(data.message || 'Unable to load image details.');
-  renderExistingImage('photoPreview', data.data.photo_path, 'photograph');
-  renderExistingImage('signaturePreview', data.data.signature_path, 'signature');
+  const cacheToken = Date.now().toString();
+  renderExistingImage('photoPreview', data.data.photo_path, 'photograph', cacheToken);
+  renderExistingImage('signaturePreview', data.data.signature_path, 'signature', cacheToken);
 }
 
 basicForm.addEventListener('submit', async (event) => {
@@ -378,8 +385,9 @@ imagesForm.addEventListener('submit', async (event) => {
     return;
   }
 
-  renderExistingImage('photoPreview', data.data.photo_path, 'photograph');
-  renderExistingImage('signaturePreview', data.data.signature_path, 'signature');
+  const cacheToken = Date.now().toString();
+  renderExistingImage('photoPreview', data.data.photo_path, 'photograph', cacheToken);
+  renderExistingImage('signaturePreview', data.data.signature_path, 'signature', cacheToken);
   imagesForm.reset();
   tabProgress.step2_images_completed = 1;
   refreshTabLocks();
