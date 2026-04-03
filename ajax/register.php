@@ -21,6 +21,7 @@ if (!$captchaCheck['success']) {
 }
 
 $db = getDb();
+$registrantIpAddress = getClientIpAddress();
 
 $emailVerifiedStmt = $db->prepare('SELECT verified_at FROM otp_verifications WHERE channel = :channel AND recipient = :recipient ORDER BY id DESC LIMIT 1');
 $emailVerifiedStmt->execute(['channel' => 'email', 'recipient' => $payload['email_id']]);
@@ -48,10 +49,10 @@ try {
     $placeholderApplicationId = 'TMP' . $payload['mobile_no'];
     $stmt = $db->prepare('INSERT INTO applicants (
         application_id, candidate_name, father_name, mother_name, date_of_birth, gender,
-        identification_type, identification_no, mobile_no, email_id, password_hash, email_verified_at, mobile_verified_at
+        identification_type, identification_no, mobile_no, email_id, password_hash, registrant_ip_address, email_verified_at, mobile_verified_at
     ) VALUES (
         :application_id, :candidate_name, :father_name, :mother_name, :date_of_birth, :gender,
-        :identification_type, :identification_no, :mobile_no, :email_id, :password_hash, NOW(), NOW()
+        :identification_type, :identification_no, :mobile_no, :email_id, :password_hash, :registrant_ip_address, NOW(), NOW()
     )');
     $stmt->execute([
         'application_id' => $placeholderApplicationId,
@@ -65,6 +66,7 @@ try {
         'mobile_no' => $payload['mobile_no'],
         'email_id' => $payload['email_id'],
         'password_hash' => password_hash((string) $payload['password'], PASSWORD_DEFAULT),
+        'registrant_ip_address' => $registrantIpAddress,
     ]);
 
     $insertedId = (int) $db->lastInsertId();
