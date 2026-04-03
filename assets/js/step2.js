@@ -86,9 +86,25 @@ function buildSelect(select, options, selected = '') {
 
 function syncPermanentAddress() {
   if (!addressForm.elements.same_as_correspondence.checked) return;
-  ['premises', 'sub_locality', 'locality', 'country', 'state', 'district', 'pin_code'].forEach((key) => {
+  ['premises', 'sub_locality', 'locality', 'pin_code'].forEach((key) => {
     addressForm.elements[`perm_${key}`].value = addressForm.elements[`corr_${key}`].value;
   });
+
+  const corrCountry = addressForm.elements.corr_country.value;
+  const corrState = addressForm.elements.corr_state.value;
+  const corrDistrict = addressForm.elements.corr_district.value;
+
+  addressForm.elements.perm_country.value = corrCountry;
+  buildSelect(
+    addressForm.elements.perm_state,
+    addressReference?.states_by_country?.[corrCountry] || [],
+    corrState
+  );
+  buildSelect(
+    addressForm.elements.perm_district,
+    addressReference?.districts_by_state?.[corrState] || [],
+    corrDistrict
+  );
 }
 
 function validateBasic(payload) {
