@@ -82,5 +82,6 @@ $stmt = $db->prepare(
         institute_name_address = VALUES(institute_name_address)'
 );
 $stmt->execute($saveData);
+upsertApplicantProgress($db, (int) $applicant['id'], ['step2_basic_completed' => 1, 'last_tab' => 'basic']);
 
 jsonResponse(['success' => true, 'message' => 'Basic Info saved successfully.']);

@@ -153,6 +153,152 @@ function getCategoryOptionsByDomicile(string $domicile): array
     return [];
 }
 
+function getAddressReferenceData(): array
+{
+    return [
+        'countries' => ['India'],
+        'states_by_country' => [
+            'India' => ['West Bengal'],
+        ],
+        'districts_by_state' => [
+            'West Bengal' => ['Kolkata', 'Howrah', 'North 24 Parganas', 'South 24 Parganas'],
+        ],
+    ];
+}
+
+function getCourseOptions(): array
+{
+    return [
+        'group_1' => ['DHS', 'FPM', 'MPhil CP', 'MAN', 'MPH', 'MPhil PSW', 'MPhil RMTS', 'MPT', 'MOT', 'MPO', 'MSLP', 'M.Sc. PH-HP', 'M.Sc. MB', 'M.Sc. MM'],
+        'group_2' => ['DHPE', 'Dip Diet', 'FCCT', 'FRMTS', 'M. Sc CCS', 'M. Sc OTS', 'M. Sc PS', 'MHA', 'MSc MBT', 'MSc MLT', 'PGDDRM', 'M. Sc PH-MCH'],
+        'exam_cities' => ['Kolkata - Salt Lake / New Town'],
+    ];
+}
+
+function validateIndianPinCode(string $pinCode): bool
+{
+    return (bool) preg_match('/^[1-9][0-9]{5}$/', $pinCode);
+}
+
+function validateStep2AddressInput(array $data): array
+{
+    $errors = [];
+    $reference = getAddressReferenceData();
+    $allowedCountries = $reference['countries'];
+    $allowedStatesByCountry = $reference['states_by_country'];
+    $allowedDistrictsByState = $reference['districts_by_state'];
+
+    foreach (['corr', 'perm'] as $prefix) {
+        $premises = trim((string) ($data[$prefix . '_premises'] ?? ''));
+        $locality = trim((string) ($data[$prefix . '_locality'] ?? ''));
+        $country = trim((string) ($data[$prefix . '_country'] ?? ''));
+        $state = trim((string) ($data[$prefix . '_state'] ?? ''));
+        $district = trim((string) ($data[$prefix . '_district'] ?? ''));
+        $pinCode = trim((string) ($data[$prefix . '_pin_code'] ?? ''));
+
+        if ($premises === '') {
+            $errors[$prefix . '_premises'] = 'Premises No./Village Name is required.';
+        }
+        if ($locality === '') {
+            $errors[$prefix . '_locality'] = 'Locality/City/Town/Village/Post Office is required.';
+        }
+        if (!in_array($country, $allowedCountries, true)) {
+            $errors[$prefix . '_country'] = 'Please select a valid country.';
+        }
+        if (!in_array($state, $allowedStatesByCountry[$country] ?? [], true)) {
+            $errors[$prefix . '_state'] = 'Please select a valid state.';
+        }
+        if (!in_array($district, $allowedDistrictsByState[$state] ?? [], true)) {
+            $errors[$prefix . '_district'] = 'Please select a valid district.';
+        }
+        if (!validateIndianPinCode($pinCode)) {
+            $errors[$prefix . '_pin_code'] = 'PIN Code must be a valid 6-digit Indian PIN.';
+        }
+    }
+
+    return $errors;
+}
+
+function validateStep2CoursesInput(array $data): array
+{
+    $errors = [];
+    $courseOptions = getCourseOptions();
+    $group1 = trim((string) ($data['course_group_1'] ?? ''));
+    $group2 = trim((string) ($data['course_group_2'] ?? ''));
+    $examCity = trim((string) ($data['exam_city'] ?? ''));
+
+    if (!in_array($group1, $courseOptions['group_1'], true)) {
+        $errors['course_group_1'] = 'Please select a valid Group-1 course.';
+    }
+    if (!in_array($group2, $courseOptions['group_2'], true)) {
+        $errors['course_group_2'] = 'Please select a valid Group-2 course.';
+    }
+    if (!in_array($examCity, $courseOptions['exam_cities'], true)) {
+        $errors['exam_city'] = 'Please select a valid exam city.';
+    }
+
+    return $errors;
+}
+
+function upsertApplicantProgress(PDO $db, int $applicantId, array $fields): void
+{
+    $allowedFields = ['step2_basic_completed', 'step2_address_completed', 'step2_courses_completed', 'step2_images_completed', 'last_tab', 'final_submitted_at'];
+    $setParts = [];
+    $params = ['applicant_id' => $applicantId];
+
+    foreach ($fields as $key => $value) {
+        if (!in_array($key, $allowedFields, true)) {
+            continue;
+        }
+        $setParts[] = $key . ' = VALUES(' . $key . ')';
+        $params[$key] = $value;
+    }
+
+    if ($setParts === []) {
+        return;
+    }
+
+    $columns = array_keys($params);
+    $sql = 'INSERT INTO applicant_progress (' . implode(', ', $columns) . ') VALUES (:' . implode(', :', $columns) . ')'
+        . ' ON DUPLICATE KEY UPDATE ' . implode(', ', $setParts);
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+}
+
+function getApplicantProgress(PDO $db, int $applicantId): array
+{
+    $stmt = $db->prepare('SELECT step2_basic_completed, step2_address_completed, step2_courses_completed, step2_images_completed, final_submitted_at, last_tab FROM applicant_progress WHERE applicant_id = :applicant_id LIMIT 1');
+    $stmt->execute(['applicant_id' => $applicantId]);
+    $progress = $stmt->fetch();
+
+    return $progress ?: [
+        'step2_basic_completed' => 0,
+        'step2_address_completed' => 0,
+        'step2_courses_completed' => 0,
+        'step2_images_completed' => 0,
+        'final_submitted_at' => null,
+        'last_tab' => 'basic',
+    ];
+}
+
+function detectResumeTab(array $progress): string
+{
+    if ($progress['step2_basic_completed'] != 1) {
+        return 'basic';
+    }
+    if ($progress['step2_address_completed'] != 1) {
+        return 'address';
+    }
+    if ($progress['step2_courses_completed'] != 1) {
+        return 'courses';
+    }
+    if ($progress['step2_images_completed'] != 1) {
+        return 'image';
+    }
+
+    return 'preview';
+}
+
 function validateStep2BasicInput(array $data): array
 {
     $errors = [];
