@@ -48,7 +48,6 @@ $newApplicationId = trim((string) ($_GET['application_id'] ?? ($_SESSION['new_ap
         <div class="error" id="loginError"></div>
         <button type="submit">Login and Continue to Step 2</button>
     </form>
-    <a class="link" href="index.php">Back to Step 1</a>
 </div>
 
 <script>

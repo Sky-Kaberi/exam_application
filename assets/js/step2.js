@@ -25,6 +25,19 @@ const statuses = {
 
 let addressReference = null;
 let courseOptions = null;
+let tabProgress = {
+  step2_basic_completed: 0,
+  step2_address_completed: 0,
+  step2_courses_completed: 0,
+  step2_images_completed: 0
+};
+
+const tabRequirements = {
+  basic: [],
+  address: ['step2_basic_completed'],
+  courses: ['step2_basic_completed', 'step2_address_completed'],
+  image: ['step2_basic_completed', 'step2_address_completed', 'step2_courses_completed']
+};
 
 function setStatus(name, message, ok = false) {
   const node = statuses[name];
@@ -33,14 +46,42 @@ function setStatus(name, message, ok = false) {
   node.style.color = ok ? '#0a7a35' : '#b42318';
 }
 
-function switchTab(tabName) {
+function canAccessTab(tabName) {
+  const requirements = tabRequirements[tabName] || [];
+  return requirements.every((key) => Number(tabProgress[key]) === 1);
+}
+
+function getBlockedTabMessage(tabName) {
+  if (tabName === 'address') return 'Please save Basic Info before opening Correspondence Address.';
+  if (tabName === 'courses') return 'Please save Basic Info and Address before opening Courses.';
+  if (tabName === 'image') return 'Please save Basic Info, Address, and Courses before opening Image Upload.';
+  return 'Please complete the previous section first.';
+}
+
+function refreshTabLocks() {
+  tabButtons.forEach((button) => {
+    const allowed = canAccessTab(button.dataset.tab);
+    button.disabled = !allowed;
+    button.style.opacity = allowed ? '1' : '0.6';
+    button.style.cursor = allowed ? 'pointer' : 'not-allowed';
+  });
+}
+
+function switchTab(tabName, persist = true) {
+  if (!canAccessTab(tabName)) {
+    setStatus('basic', getBlockedTabMessage(tabName));
+    return false;
+  }
   tabButtons.forEach((button) => button.classList.toggle('active', button.dataset.tab === tabName));
   tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === `tab-${tabName}`));
-  fetch('../ajax/progress.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ last_tab: tabName })
-  }).catch(() => null);
+  if (persist) {
+    fetch('../ajax/progress.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ last_tab: tabName })
+    }).catch(() => null);
+  }
+  return true;
 }
 
 function clearErrors(form) {
@@ -198,13 +239,19 @@ async function submitJsonForm(form, url, payload, tabName, validator) {
     return false;
   }
 
+  if (tabName === 'basic') tabProgress.step2_basic_completed = 1;
+  if (tabName === 'address') tabProgress.step2_address_completed = 1;
+  if (tabName === 'courses') tabProgress.step2_courses_completed = 1;
+  refreshTabLocks();
   setStatus(tabName, data.message || 'Saved successfully.', true);
   return true;
 }
 
 async function loadBasicInfo() {
   const response = await fetch('../ajax/step2_basic.php');
+  if (!response.ok) throw new Error('Unable to load basic info.');
   const data = await response.json();
+  if (!data.success || !data.data) throw new Error(data.message || 'Unable to load basic info.');
   Object.entries(data.data).forEach(([key, value]) => { if (basicForm.elements[key]) basicForm.elements[key].value = value ?? ''; });
   renderCategoryOptions(data.data.category || '');
   toggleDisabilityFields();
@@ -212,7 +259,9 @@ async function loadBasicInfo() {
 
 async function loadAddressInfo() {
   const response = await fetch('../ajax/step2_address.php');
+  if (!response.ok) throw new Error('Unable to load address info.');
   const data = await response.json();
+  if (!data.success || !data.data || !data.reference) throw new Error(data.message || 'Unable to load address info.');
   addressReference = data.reference;
 
   ['corr_country', 'perm_country'].forEach((name) => buildSelect(addressForm.elements[name], addressReference.countries, data.data[name] || ''));
@@ -263,7 +312,9 @@ async function loadAddressInfo() {
 
 async function loadCourseInfo() {
   const response = await fetch('../ajax/step2_courses.php');
+  if (!response.ok) throw new Error('Unable to load courses.');
   const data = await response.json();
+  if (!data.success || !data.data || !data.options) throw new Error(data.message || 'Unable to load courses.');
   courseOptions = data.options;
   buildSelect(coursesForm.elements.course_group_1, courseOptions.group_1, data.data.course_group_1 || '');
   buildSelect(coursesForm.elements.course_group_2, courseOptions.group_2, data.data.course_group_2 || '');
@@ -277,7 +328,9 @@ function renderExistingImage(id, path, label) {
 
 async function loadImagesInfo() {
   const response = await fetch('../ajax/step2_images.php');
+  if (!response.ok) throw new Error('Unable to load image details.');
   const data = await response.json();
+  if (!data.success || !data.data) throw new Error(data.message || 'Unable to load image details.');
   renderExistingImage('photoPreview', data.data.photo_path, 'photograph');
   renderExistingImage('signaturePreview', data.data.signature_path, 'signature');
 }
@@ -322,6 +375,8 @@ imagesForm.addEventListener('submit', async (event) => {
   renderExistingImage('photoPreview', data.data.photo_path, 'photograph');
   renderExistingImage('signaturePreview', data.data.signature_path, 'signature');
   imagesForm.reset();
+  tabProgress.step2_images_completed = 1;
+  refreshTabLocks();
   setStatus('image', data.message || 'Saved successfully.', true);
 });
 
@@ -336,17 +391,60 @@ addressForm.elements.same_as_correspondence.addEventListener('change', syncPerma
 document.querySelectorAll('button[data-next-tab]').forEach((button) => {
   button.addEventListener('click', async () => {
     const form = button.closest('form');
-    form.requestSubmit();
-    setTimeout(() => switchTab(button.dataset.nextTab), 150);
+    let saved = false;
+    if (form === basicForm) {
+      const payload = Object.fromEntries(new FormData(basicForm).entries());
+      saved = await submitJsonForm(basicForm, '../ajax/step2_basic.php', payload, 'basic', validateBasic);
+    } else if (form === addressForm) {
+      const payload = Object.fromEntries(new FormData(addressForm).entries());
+      payload.same_as_correspondence = addressForm.elements.same_as_correspondence.checked ? 1 : 0;
+      saved = await submitJsonForm(addressForm, '../ajax/step2_address.php', payload, 'address', validateAddress);
+    } else if (form === coursesForm) {
+      const payload = Object.fromEntries(new FormData(coursesForm).entries());
+      saved = await submitJsonForm(coursesForm, '../ajax/step2_courses.php', payload, 'courses', validateCourses);
+    }
+    if (saved) {
+      switchTab(button.dataset.nextTab);
+    }
   });
 });
 
-tabButtons.forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+tabButtons.forEach((button) => button.addEventListener('click', () => {
+  const targetTab = button.dataset.tab;
+  if (!switchTab(targetTab)) {
+    setStatus('basic', getBlockedTabMessage(targetTab));
+  }
+}));
 
-Promise.all([loadBasicInfo(), loadAddressInfo(), loadCourseInfo(), loadImagesInfo()]).then(async () => {
-  const response = await fetch('../ajax/progress.php');
-  const data = await response.json();
-  switchTab(window.step2InitialTab || data.progress.last_tab || data.resume_tab || 'basic');
+Promise.allSettled([loadBasicInfo(), loadAddressInfo(), loadCourseInfo(), loadImagesInfo()]).then(async (results) => {
+  const failed = results.filter((result) => result.status === 'rejected');
+  if (failed.length) {
+    setStatus('basic', 'Some saved values could not be loaded. Please refresh and try again.');
+  }
+
+  let resumeTab = 'basic';
+  try {
+    const response = await fetch('../ajax/progress.php');
+    const data = await response.json();
+    if (response.ok && data.success) {
+      resumeTab = data.resume_tab || 'basic';
+      tabProgress = {
+        step2_basic_completed: Number(data.progress.step2_basic_completed || 0),
+        step2_address_completed: Number(data.progress.step2_address_completed || 0),
+        step2_courses_completed: Number(data.progress.step2_courses_completed || 0),
+        step2_images_completed: Number(data.progress.step2_images_completed || 0)
+      };
+    }
+  } catch (error) {
+    // no-op: keep defaults
+  }
+
+  refreshTabLocks();
+  const preferredTab = window.step2InitialTab || resumeTab || 'basic';
+  if (!switchTab(preferredTab, false)) {
+    switchTab(resumeTab === 'preview' ? 'image' : resumeTab, false) || switchTab('basic', false);
+  }
 }).catch(() => {
-  switchTab(window.step2InitialTab || 'basic');
+  refreshTabLocks();
+  switchTab('basic', false);
 });
