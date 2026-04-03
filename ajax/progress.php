@@ -18,6 +18,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($lastTab, ['basic', 'address', 'courses', 'image'], true)) {
         jsonResponse(['success' => false, 'message' => 'Invalid tab.'], 422);
     }
+
+    $allowedTabs = ['basic'];
+    if ((int) $progress['step2_basic_completed'] === 1) {
+        $allowedTabs[] = 'address';
+    }
+    if ((int) $progress['step2_address_completed'] === 1) {
+        $allowedTabs[] = 'courses';
+    }
+    if ((int) $progress['step2_courses_completed'] === 1) {
+        $allowedTabs[] = 'image';
+    }
+    if (!in_array($lastTab, $allowedTabs, true)) {
+        jsonResponse(['success' => false, 'message' => 'Please complete previous tab(s) first.'], 422);
+    }
+
     upsertApplicantProgress($db, (int) $applicant['id'], ['last_tab' => $lastTab]);
     $progress = getApplicantProgress($db, (int) $applicant['id']);
 }
