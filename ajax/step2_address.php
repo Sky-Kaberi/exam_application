@@ -28,6 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 $payload = decodeJsonRequestBody();
+
+if (!empty($payload['same_as_correspondence'])) {
+    $payload['perm_premises'] = $payload['corr_premises'] ?? '';
+    $payload['perm_sub_locality'] = $payload['corr_sub_locality'] ?? '';
+    $payload['perm_locality'] = $payload['corr_locality'] ?? '';
+    $payload['perm_country'] = $payload['corr_country'] ?? '';
+    $payload['perm_state'] = $payload['corr_state'] ?? '';
+    $payload['perm_district'] = $payload['corr_district'] ?? '';
+    $payload['perm_pin_code'] = $payload['corr_pin_code'] ?? '';
+}
+
 $errors = validateStep2AddressInput($payload);
 
 if ($errors !== []) {
