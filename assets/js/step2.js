@@ -84,6 +84,30 @@ function buildSelect(select, options, selected = '') {
   });
 }
 
+function getAddressOptions(type, key) {
+  if (!addressReference) return [];
+  if (type === 'states') return addressReference.states_by_country?.[key] || [];
+  if (type === 'districts') return addressReference.districts_by_state?.[key] || [];
+  return [];
+}
+
+function populateAddressDropdowns(prefix, values = {}) {
+  const country = values.country || '';
+  const state = values.state || '';
+  const district = values.district || '';
+
+  const countryField = addressForm.elements[`${prefix}_country`];
+  const stateField = addressForm.elements[`${prefix}_state`];
+  const districtField = addressForm.elements[`${prefix}_district`];
+
+  countryField.value = country;
+
+  buildSelect(stateField, getAddressOptions('states', country), state);
+  const selectedState = stateField.value;
+
+  buildSelect(districtField, getAddressOptions('districts', selectedState), district);
+}
+
 function syncPermanentAddress() {
   if (!addressForm.elements.same_as_correspondence.checked) return;
   ['premises', 'sub_locality', 'locality', 'pin_code'].forEach((key) => {
@@ -94,17 +118,11 @@ function syncPermanentAddress() {
   const corrState = addressForm.elements.corr_state.value;
   const corrDistrict = addressForm.elements.corr_district.value;
 
-  addressForm.elements.perm_country.value = corrCountry;
-  buildSelect(
-    addressForm.elements.perm_state,
-    addressReference?.states_by_country?.[corrCountry] || [],
-    corrState
-  );
-  buildSelect(
-    addressForm.elements.perm_district,
-    addressReference?.districts_by_state?.[corrState] || [],
-    corrDistrict
-  );
+  populateAddressDropdowns('perm', {
+    country: corrCountry,
+    state: corrState,
+    district: corrDistrict
+  });
 }
 
 function validateBasic(payload) {
@@ -198,8 +216,6 @@ async function loadAddressInfo() {
   addressReference = data.reference;
 
   ['corr_country', 'perm_country'].forEach((name) => buildSelect(addressForm.elements[name], addressReference.countries, data.data[name] || ''));
-  const renderStates = (prefix) => buildSelect(addressForm.elements[`${prefix}_state`], addressReference.states_by_country[addressForm.elements[`${prefix}_country`].value] || [], data.data[`${prefix}_state`] || '');
-  const renderDistricts = (prefix) => buildSelect(addressForm.elements[`${prefix}_district`], addressReference.districts_by_state[addressForm.elements[`${prefix}_state`].value] || [], data.data[`${prefix}_district`] || '');
 
   Object.entries(data.data).forEach(([key, value]) => {
     if (addressForm.elements[key] && !['corr_country', 'corr_state', 'corr_district', 'perm_country', 'perm_state', 'perm_district'].includes(key)) {
@@ -211,13 +227,21 @@ async function loadAddressInfo() {
     }
   });
 
-  renderStates('corr'); renderStates('perm'); renderDistricts('corr'); renderDistricts('perm');
+  populateAddressDropdowns('corr', {
+    country: data.data.corr_country || '',
+    state: data.data.corr_state || '',
+    district: data.data.corr_district || ''
+  });
+  populateAddressDropdowns('perm', {
+    country: data.data.perm_country || '',
+    state: data.data.perm_state || '',
+    district: data.data.perm_district || ''
+  });
 
   ['corr_country', 'perm_country'].forEach((name) => {
     addressForm.elements[name].addEventListener('change', () => {
       const prefix = name.startsWith('corr') ? 'corr' : 'perm';
-      buildSelect(addressForm.elements[`${prefix}_state`], addressReference.states_by_country[addressForm.elements[name].value] || []);
-      buildSelect(addressForm.elements[`${prefix}_district`], []);
+      populateAddressDropdowns(prefix, { country: addressForm.elements[name].value });
       syncPermanentAddress();
     });
   });
@@ -225,10 +249,16 @@ async function loadAddressInfo() {
   ['corr_state', 'perm_state'].forEach((name) => {
     addressForm.elements[name].addEventListener('change', () => {
       const prefix = name.startsWith('corr') ? 'corr' : 'perm';
-      buildSelect(addressForm.elements[`${prefix}_district`], addressReference.districts_by_state[addressForm.elements[name].value] || []);
+      const currentCountry = addressForm.elements[`${prefix}_country`].value;
+      populateAddressDropdowns(prefix, {
+        country: currentCountry,
+        state: addressForm.elements[name].value
+      });
       syncPermanentAddress();
     });
   });
+
+  syncPermanentAddress();
 }
 
 async function loadCourseInfo() {
