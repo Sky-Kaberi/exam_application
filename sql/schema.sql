@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS applicants (
     mobile_no VARCHAR(15) NOT NULL UNIQUE,
     email_id VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    registrant_ip_address VARCHAR(45) NULL,
     email_verified_at DATETIME NULL,
     mobile_verified_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -55,6 +55,30 @@ function decodeJsonRequestBody(): array
     return $payload;
 }
 
+function getClientIpAddress(): ?string
+{
+    $candidates = [
+        $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+        $_SERVER['HTTP_CLIENT_IP'] ?? null,
+        $_SERVER['REMOTE_ADDR'] ?? null,
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (!is_string($candidate) || trim($candidate) === '') {
+            continue;
+        }
+
+        $parts = array_map('trim', explode(',', $candidate));
+        foreach ($parts as $part) {
+            if (filter_var($part, FILTER_VALIDATE_IP) !== false) {
+                return $part;
+            }
+        }
+    }
+
+    return null;
+}
+
 function generateOtp(): string
 {
     return (string) random_int(100000, 999999);
