@@ -63,7 +63,7 @@ function renderSection(title, fields, editTab) {
 }
 
 async function loadPreview() {
-  const response = await fetch('../ajax/preview.php');
+  const response = await fetch(`../ajax/preview.php?t=${Date.now()}`, { cache: 'no-store' });
   const data = await response.json();
 
   if (!response.ok || !data.success) {
@@ -102,6 +102,10 @@ async function loadPreview() {
   ].join('');
 }
 
+window.addEventListener('pageshow', () => {
+  loadPreview().catch(() => null);
+});
+
 finalSubmitBtn.addEventListener('click', async () => {
   statusNode.textContent = '';
   finalSubmitBtn.disabled = true;
@@ -124,7 +128,7 @@ finalSubmitBtn.addEventListener('click', async () => {
   statusNode.style.color = '#0a7a35';
 });
 
-loadPreview();
+loadPreview().catch(() => null);
 </script>
 </body>
 </html>
