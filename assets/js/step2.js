@@ -81,6 +81,12 @@ function switchTab(tabName, persist = true) {
       body: JSON.stringify({ last_tab: tabName })
     }).catch(() => null);
   }
+
+  if (tabName === 'image') {
+    loadImagesInfo().catch(() => {
+      setStatus('image', 'Unable to refresh saved images. Please try again.');
+    });
+  }
   return true;
 }
 

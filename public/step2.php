@@ -138,7 +138,7 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
                     <div class="field"><label>Recent colour photograph</label><input type="file" name="photo" accept=".jpg,.jpeg,image/jpeg"><div class="error" data-error-for="photo"></div><div class="upload-preview" id="photoPreview"></div></div>
                     <div class="field"><label>Signature</label><input type="file" name="signature" accept=".jpg,.jpeg,image/jpeg"><div class="error" data-error-for="signature"></div><div class="upload-preview" id="signaturePreview"></div></div>
                 </div>
-                <div class="actions"><button type="submit">Save Images</button><a href="step3_preview.php" class="tab-btn" style="text-decoration:none;">Continue to Step 3 Preview</a></div>
+                <div class="actions"><button type="submit">Upload Images</button><a href="step3_preview.php" class="tab-btn" style="text-decoration:none;">Continue to Step 3 Preview</a></div>
                 <div class="status" id="imagesStatus"></div>
             </form>
         </div>
