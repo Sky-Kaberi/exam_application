@@ -45,7 +45,7 @@ $applicant = requireApplicantLoginForPage('login.php');
         <div id="previewRoot"></div>
         <div class="actions">
             <a href="step2.php" class="secondary">Back to Step 2</a>
-            <button id="finalSubmitBtn">Confirm Preview & Final Submit</button>
+            <button id="finalSubmitBtn">Proceed to Fee Payment</button>
         </div>
         <div class="status" id="previewStatus"></div>
     </div>
@@ -125,8 +125,9 @@ finalSubmitBtn.addEventListener('click', async () => {
     return;
   }
 
-  statusNode.textContent = data.message || 'Application submitted successfully.';
+  statusNode.textContent = data.message || 'Preview submitted successfully. Redirecting to fee payment...';
   statusNode.style.color = '#0a7a35';
+  window.location.href = 'step4_fee_payment.php';
 });
 
 loadPreview().catch(() => null);
