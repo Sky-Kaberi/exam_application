@@ -33,9 +33,16 @@ $addressStmt = $db->prepare('SELECT * FROM applicant_step2_address WHERE applica
 $addressStmt->execute(['id' => $applicant['id']]);
 $address = $addressStmt->fetch();
 
-$coursesStmt = $db->prepare('SELECT course_group_1, course_group_2, exam_city FROM applicant_step2_courses WHERE applicant_id = :id LIMIT 1');
+$coursesStmt = $db->prepare('SELECT course_group_1, course_group_2, exam_city, application_fee FROM applicant_step2_courses WHERE applicant_id = :id LIMIT 1');
 $coursesStmt->execute(['id' => $applicant['id']]);
 $courses = $coursesStmt->fetch();
+
+
+if (is_array($courses)) {
+    $courses['application_fee'] = isset($courses['application_fee']) && (int) $courses['application_fee'] > 0
+        ? (int) $courses['application_fee']
+        : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
+}
 
 $imagesStmt = $db->prepare('SELECT photo_path, signature_path FROM applicant_step2_images WHERE applicant_id = :id LIMIT 1');
 $imagesStmt->execute(['id' => $applicant['id']]);

@@ -4,6 +4,25 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
+
+const BASE_APPLICATION_FEE = 3000;
+
+function calculateApplicationFee(string $group1, string $group2): int
+{
+    $hasGroup1 = trim($group1) !== '';
+    $hasGroup2 = trim($group2) !== '';
+
+    if ($hasGroup1 && $hasGroup2) {
+        return BASE_APPLICATION_FEE * 2;
+    }
+
+    if ($hasGroup1 || $hasGroup2) {
+        return BASE_APPLICATION_FEE;
+    }
+
+    return 0;
+}
+
 function ensureSessionStarted(): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -230,12 +249,18 @@ function validateStep2CoursesInput(array $data): array
     $group2 = trim((string) ($data['course_group_2'] ?? ''));
     $examCity = trim((string) ($data['exam_city'] ?? ''));
 
-    if (!in_array($group1, $courseOptions['group_1'], true)) {
+    if ($group1 !== '' && !in_array($group1, $courseOptions['group_1'], true)) {
         $errors['course_group_1'] = 'Please select a valid Group-1 course.';
     }
-    if (!in_array($group2, $courseOptions['group_2'], true)) {
+    if ($group2 !== '' && !in_array($group2, $courseOptions['group_2'], true)) {
         $errors['course_group_2'] = 'Please select a valid Group-2 course.';
     }
+
+    if ($group1 === '' && $group2 === '') {
+        $errors['course_group_1'] = 'Select one course from Group-1 or Group-2.';
+        $errors['course_group_2'] = 'Select one course from Group-1 or Group-2.';
+    }
+
     if (!in_array($examCity, $courseOptions['exam_cities'], true)) {
         $errors['exam_city'] = 'Please select a valid exam city.';
     }

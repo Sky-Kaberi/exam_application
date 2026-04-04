@@ -70,9 +70,10 @@ CREATE TABLE IF NOT EXISTS applicant_step2_address (
 CREATE TABLE IF NOT EXISTS applicant_step2_courses (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     applicant_id BIGINT UNSIGNED NOT NULL UNIQUE,
-    course_group_1 VARCHAR(100) NOT NULL,
-    course_group_2 VARCHAR(100) NOT NULL,
+    course_group_1 VARCHAR(100) NOT NULL DEFAULT '',
+    course_group_2 VARCHAR(100) NOT NULL DEFAULT '',
     exam_city VARCHAR(150) NOT NULL,
+    application_fee INT UNSIGNED NOT NULL DEFAULT 3000,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_step2_courses_applicant FOREIGN KEY (applicant_id) REFERENCES applicants(id) ON DELETE CASCADE
