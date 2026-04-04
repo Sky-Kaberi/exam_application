@@ -229,7 +229,8 @@ if ($paymentStatus !== 'paid') {
             .doc-header {
                 background: var(--header-bg) !important;
             }
-            .doc-header, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title { break-inside: avoid; }
+            .doc-header, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title, .address-grid, .address-block { break-inside: avoid; }
+            .address-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
         }
     </style>
 </head>
