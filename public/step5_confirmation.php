@@ -89,14 +89,18 @@ if ($paymentStatus !== 'paid') {
             gap: 14px;
             align-items: start;
         }
+        .sections-grid > * { min-width: 0; }
+        .grid-item {
+            border: 1px solid var(--border);
+            padding: 12px;
+            background: #fff;
+        }
         .summary-card,
         .media-card,
         .section,
         .note-block {
-            border: 1px solid var(--border);
-            padding: 12px;
+            margin-top: 0;
         }
-        .section { margin-top: 0; }
         .section h3,
         .summary-card h3,
         .media-card h3 { margin: 0 0 10px 0; font-size: 16px; }
@@ -155,8 +159,6 @@ if ($paymentStatus !== 'paid') {
         }
         .section-title {
             background: #f8fafc;
-            border: 1px solid var(--border);
-            border-bottom: none;
             padding: 10px;
             font-size: 15px;
             font-weight: 700;
@@ -285,7 +287,7 @@ function kvItem(label, itemValue) {
 function kvSection(title, fields) {
   const rows = fields.map(([label, rowValue]) => kvItem(label, rowValue)).join('');
   return `
-    <section class="section">
+    <section class="section grid-item">
       <div class="section-title">${escapeHtml(title)}</div>
       <div class="kv-grid">${rows}</div>
     </section>`;
@@ -319,7 +321,7 @@ function addressSection(address) {
   const corrLines = formatAddressLines(address, 'corr');
   const permLines = formatAddressLines(address, 'perm');
   return `
-    <section class="section">
+    <section class="section grid-item">
       <div class="section-title">Address Details</div>
       <div class="address-grid">
         ${addressBlock('Correspondence Address', corrLines)}
@@ -367,7 +369,7 @@ async function loadConfirmation() {
     ${buildHeader(d.step1, d.courses, d.confirmation_datetime)}
 
     <section class="sections-grid">
-      <div class="summary-card">
+      <div class="summary-card grid-item">
         <h3>Application Summary</h3>
         <div class="kv-grid">
           ${kvItem('Application Number', d.step1?.application_id)}
@@ -383,7 +385,7 @@ async function loadConfirmation() {
         </div>
       </div>
 
-      <aside class="media-card" aria-label="Candidate images">
+      <aside class="media-card grid-item" aria-label="Candidate images">
         <h3>Candidate Images</h3>
         <div class="media-stack">
           ${imageBox('Candidate Photograph', d.images?.photo_path, 'Candidate Photograph')}
@@ -405,7 +407,7 @@ async function loadConfirmation() {
         ['Amount Paid', formatFee(d.step1?.payment_amount)],
         ['Acknowledgement Generated On', d.confirmation_datetime]
       ])}
-      <section class="note-block">
+      <section class="note-block grid-item">
         <strong>Important Instructions</strong>
         <ul>
           <li>The candidate is advised to keep this confirmation page for future reference.</li>
