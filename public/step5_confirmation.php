@@ -164,6 +164,26 @@ if ($paymentStatus !== 'paid') {
             margin-top: 14px;
             background: #f8fafc;
         }
+        .address-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .address-block {
+            border: 1px solid var(--border);
+            padding: 10px;
+            min-height: 130px;
+        }
+        .address-block h4 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+        }
+        .address-line {
+            margin: 0;
+            line-height: 1.45;
+            font-weight: 600;
+            word-break: break-word;
+        }
         .note-block ul { margin: 8px 0 0 20px; padding: 0; }
         .note-block li { margin-bottom: 6px; font-size: 14px; }
         .status {
@@ -178,6 +198,7 @@ if ($paymentStatus !== 'paid') {
             .kv-grid { grid-template-columns: 1fr; }
             .kv-item { grid-template-columns: 140px 1fr; }
             .kv-item:nth-child(odd) { border-right: none; }
+            .address-grid { grid-template-columns: 1fr; }
         }
         @media print {
             body { background: #fff; padding: 0; }
@@ -241,6 +262,43 @@ function kvSection(title, fields) {
     <section class="section">
       <div class="section-title">${escapeHtml(title)}</div>
       <div class="kv-grid">${rows}</div>
+    </section>`;
+}
+
+function clean(v) {
+  return (v === null || v === undefined) ? '' : String(v).trim();
+}
+
+function joinParts(parts) {
+  const values = parts.map(clean).filter(Boolean);
+  return values.length ? values.join(', ') : '';
+}
+
+function formatAddressLines(address, prefix) {
+  const line1 = joinParts([address?.[`${prefix}_premises`], address?.[`${prefix}_sub_locality`]]);
+  const line2 = joinParts([address?.[`${prefix}_locality`] || address?.[`${prefix}_district`], address?.[`${prefix}_state`]]);
+  const country = clean(address?.[`${prefix}_country`]);
+  const pin = clean(address?.[`${prefix}_pin_code`]);
+  const line3 = country && pin ? `${country} – ${pin}` : (country || pin);
+  const lines = [line1, line2, line3].filter(Boolean);
+  return lines.length ? lines : ['-'];
+}
+
+function addressBlock(title, lines) {
+  const lineMarkup = lines.map((line) => `<p class="address-line">${escapeHtml(line)}</p>`).join('');
+  return `<article class="address-block"><h4>${escapeHtml(title)}</h4>${lineMarkup}</article>`;
+}
+
+function addressSection(address) {
+  const corrLines = formatAddressLines(address, 'corr');
+  const permLines = formatAddressLines(address, 'perm');
+  return `
+    <section class="section">
+      <div class="section-title">Address Details</div>
+      <div class="address-grid">
+        ${addressBlock('Correspondence Address', corrLines)}
+        ${addressBlock('Permanent Address', permLines)}
+      </div>
     </section>`;
 }
 
@@ -315,23 +373,7 @@ async function loadConfirmation() {
       ['Application Fee Amount', formatFee(d.courses?.application_fee)]
     ])}
 
-    ${kvSection('Address Details', [
-      ['Corr Premises', d.address?.corr_premises],
-      ['Corr Sub-locality', d.address?.corr_sub_locality],
-      ['Corr Locality', d.address?.corr_locality],
-      ['Corr Country', d.address?.corr_country],
-      ['Corr State', d.address?.corr_state],
-      ['Corr District', d.address?.corr_district],
-      ['Corr PIN', d.address?.corr_pin_code],
-      ['Same as Correspondence', Number(d.address?.same_as_correspondence) ? 'Yes' : 'No'],
-      ['Perm Premises', d.address?.perm_premises],
-      ['Perm Sub-locality', d.address?.perm_sub_locality],
-      ['Perm Locality', d.address?.perm_locality],
-      ['Perm Country', d.address?.perm_country],
-      ['Perm State', d.address?.perm_state],
-      ['Perm District', d.address?.perm_district],
-      ['Perm PIN', d.address?.perm_pin_code]
-    ])}
+    ${addressSection(d.address)}
 
     ${kvSection('Payment Details', [
       ['Payment Status', d.step1?.payment_status],
