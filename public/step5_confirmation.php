@@ -67,6 +67,7 @@ if ($paymentStatus !== 'paid') {
             border: 1px solid var(--border);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
             padding: 22px;
+            border-radius: 8px;
         }
         .doc-header {
             text-align: center;
@@ -201,9 +202,33 @@ if ($paymentStatus !== 'paid') {
             .address-grid { grid-template-columns: 1fr; }
         }
         @media print {
-            body { background: #fff; padding: 0; }
+            :root {
+                --border: #b9c3d0;
+                --header-bg: #eef3fb;
+            }
+            html, body { width: 210mm; }
+            body {
+                background: #fff;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .page-wrap {
+                max-width: none;
+                width: 100%;
+                margin: 0;
+            }
             .toolbar, .status { display: none !important; }
-            .document { box-shadow: none; border: none; padding: 0; }
+            .document {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                border-radius: 0;
+                padding: 12px;
+            }
+            .doc-header {
+                background: var(--header-bg) !important;
+            }
             .doc-header, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title { break-inside: avoid; }
         }
     </style>
