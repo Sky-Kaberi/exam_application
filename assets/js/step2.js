@@ -25,6 +25,7 @@ const statuses = {
 
 let addressReference = null;
 let courseOptions = null;
+let addressListenersBound = false;
 let tabProgress = {
   step2_basic_completed: 0,
   step2_address_completed: 0,
@@ -38,6 +39,12 @@ const tabRequirements = {
   courses: ['step2_basic_completed', 'step2_address_completed'],
   image: ['step2_basic_completed', 'step2_address_completed', 'step2_courses_completed']
 };
+
+async function apiGetJson(url) {
+  const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`, { cache: 'no-store' });
+  const data = await response.json();
+  return { response, data };
+}
 
 function setStatus(name, message, ok = false) {
   const node = statuses[name];
@@ -75,19 +82,25 @@ function switchTab(tabName, persist = true) {
   tabButtons.forEach((button) => button.classList.toggle('active', button.dataset.tab === tabName));
   tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === `tab-${tabName}`));
   if (persist) {
-    fetch('../ajax/progress.php', {
+    fetch(`../ajax/progress.php?t=${Date.now()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ last_tab: tabName })
+      body: JSON.stringify({ last_tab: tabName }),
+      cache: 'no-store'
     }).catch(() => null);
   }
 
-  if (tabName === 'image') {
-    loadImagesInfo().catch(() => {
-      setStatus('image', 'Unable to refresh saved images. Please try again.');
-    });
-  }
+  reloadTabData(tabName).catch(() => {
+    setStatus(tabName, 'Unable to refresh saved values. Please try again.');
+  });
   return true;
+}
+
+async function reloadTabData(tabName) {
+  if (tabName === 'basic') return loadBasicInfo();
+  if (tabName === 'address') return loadAddressInfo();
+  if (tabName === 'courses') return loadCourseInfo();
+  if (tabName === 'image') return loadImagesInfo();
 }
 
 function clearErrors(form) {
@@ -254,9 +267,8 @@ async function submitJsonForm(form, url, payload, tabName, validator) {
 }
 
 async function loadBasicInfo() {
-  const response = await fetch('../ajax/step2_basic.php');
+  const { response, data } = await apiGetJson('../ajax/step2_basic.php');
   if (!response.ok) throw new Error('Unable to load basic info.');
-  const data = await response.json();
   if (!data.success || !data.data) throw new Error(data.message || 'Unable to load basic info.');
   Object.entries(data.data).forEach(([key, value]) => { if (basicForm.elements[key]) basicForm.elements[key].value = value ?? ''; });
   renderCategoryOptions(data.data.category || '');
@@ -264,9 +276,8 @@ async function loadBasicInfo() {
 }
 
 async function loadAddressInfo() {
-  const response = await fetch('../ajax/step2_address.php');
+  const { response, data } = await apiGetJson('../ajax/step2_address.php');
   if (!response.ok) throw new Error('Unable to load address info.');
-  const data = await response.json();
   if (!data.success || !data.data || !data.reference) throw new Error(data.message || 'Unable to load address info.');
   addressReference = data.reference;
 
@@ -293,33 +304,35 @@ async function loadAddressInfo() {
     district: data.data.perm_district || ''
   });
 
-  ['corr_country', 'perm_country'].forEach((name) => {
-    addressForm.elements[name].addEventListener('change', () => {
-      const prefix = name.startsWith('corr') ? 'corr' : 'perm';
-      populateAddressDropdowns(prefix, { country: addressForm.elements[name].value });
-      syncPermanentAddress();
-    });
-  });
-
-  ['corr_state', 'perm_state'].forEach((name) => {
-    addressForm.elements[name].addEventListener('change', () => {
-      const prefix = name.startsWith('corr') ? 'corr' : 'perm';
-      const currentCountry = addressForm.elements[`${prefix}_country`].value;
-      populateAddressDropdowns(prefix, {
-        country: currentCountry,
-        state: addressForm.elements[name].value
+  if (!addressListenersBound) {
+    ['corr_country', 'perm_country'].forEach((name) => {
+      addressForm.elements[name].addEventListener('change', () => {
+        const prefix = name.startsWith('corr') ? 'corr' : 'perm';
+        populateAddressDropdowns(prefix, { country: addressForm.elements[name].value });
+        syncPermanentAddress();
       });
-      syncPermanentAddress();
     });
-  });
+
+    ['corr_state', 'perm_state'].forEach((name) => {
+      addressForm.elements[name].addEventListener('change', () => {
+        const prefix = name.startsWith('corr') ? 'corr' : 'perm';
+        const currentCountry = addressForm.elements[`${prefix}_country`].value;
+        populateAddressDropdowns(prefix, {
+          country: currentCountry,
+          state: addressForm.elements[name].value
+        });
+        syncPermanentAddress();
+      });
+    });
+    addressListenersBound = true;
+  }
 
   syncPermanentAddress();
 }
 
 async function loadCourseInfo() {
-  const response = await fetch('../ajax/step2_courses.php');
+  const { response, data } = await apiGetJson('../ajax/step2_courses.php');
   if (!response.ok) throw new Error('Unable to load courses.');
-  const data = await response.json();
   if (!data.success || !data.data || !data.options) throw new Error(data.message || 'Unable to load courses.');
   courseOptions = data.options;
   buildSelect(coursesForm.elements.course_group_1, courseOptions.group_1, data.data.course_group_1 || '');
@@ -339,9 +352,8 @@ function renderExistingImage(id, path, label, cacheToken = '') {
 }
 
 async function loadImagesInfo() {
-  const response = await fetch('../ajax/step2_images.php', { cache: 'no-store' });
+  const { response, data } = await apiGetJson('../ajax/step2_images.php');
   if (!response.ok) throw new Error('Unable to load image details.');
-  const data = await response.json();
   if (!data.success || !data.data) throw new Error(data.message || 'Unable to load image details.');
   const cacheToken = Date.now().toString();
   renderExistingImage('photoPreview', data.data.photo_path, 'photograph', cacheToken);
@@ -438,17 +450,7 @@ Promise.allSettled([loadBasicInfo(), loadAddressInfo(), loadCourseInfo(), loadIm
 
   let resumeTab = 'basic';
   try {
-    const response = await fetch('../ajax/progress.php');
-    const data = await response.json();
-    if (response.ok && data.success) {
-      resumeTab = data.resume_tab || 'basic';
-      tabProgress = {
-        step2_basic_completed: Number(data.progress.step2_basic_completed || 0),
-        step2_address_completed: Number(data.progress.step2_address_completed || 0),
-        step2_courses_completed: Number(data.progress.step2_courses_completed || 0),
-        step2_images_completed: Number(data.progress.step2_images_completed || 0)
-      };
-    }
+    resumeTab = await refreshProgress();
   } catch (error) {
     // no-op: keep defaults
   }
@@ -462,3 +464,28 @@ Promise.allSettled([loadBasicInfo(), loadAddressInfo(), loadCourseInfo(), loadIm
   refreshTabLocks();
   switchTab('basic', false);
 });
+
+window.addEventListener('pageshow', async () => {
+  try {
+    await refreshProgress();
+    refreshTabLocks();
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'basic';
+    await reloadTabData(activeTab);
+  } catch (error) {
+    // no-op
+  }
+});
+async function refreshProgress() {
+  const { response, data } = await apiGetJson('../ajax/progress.php');
+  if (!response.ok || !data.success) {
+    throw new Error('Unable to load application progress.');
+  }
+
+  tabProgress = {
+    step2_basic_completed: Number(data.progress.step2_basic_completed || 0),
+    step2_address_completed: Number(data.progress.step2_address_completed || 0),
+    step2_courses_completed: Number(data.progress.step2_courses_completed || 0),
+    step2_images_completed: Number(data.progress.step2_images_completed || 0)
+  };
+  return data.resume_tab || 'basic';
+}
