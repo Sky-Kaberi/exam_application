@@ -315,6 +315,24 @@ async function loadConfirmation() {
       ['Application Fee Amount', formatFee(d.courses?.application_fee)]
     ])}
 
+    ${kvSection('Address Details', [
+      ['Corr Premises', d.address?.corr_premises],
+      ['Corr Sub-locality', d.address?.corr_sub_locality],
+      ['Corr Locality', d.address?.corr_locality],
+      ['Corr Country', d.address?.corr_country],
+      ['Corr State', d.address?.corr_state],
+      ['Corr District', d.address?.corr_district],
+      ['Corr PIN', d.address?.corr_pin_code],
+      ['Same as Correspondence', Number(d.address?.same_as_correspondence) ? 'Yes' : 'No'],
+      ['Perm Premises', d.address?.perm_premises],
+      ['Perm Sub-locality', d.address?.perm_sub_locality],
+      ['Perm Locality', d.address?.perm_locality],
+      ['Perm Country', d.address?.perm_country],
+      ['Perm State', d.address?.perm_state],
+      ['Perm District', d.address?.perm_district],
+      ['Perm PIN', d.address?.perm_pin_code]
+    ])}
+
     ${kvSection('Payment Details', [
       ['Payment Status', d.step1?.payment_status],
       ['Payment Mode', d.step1?.payment_mode],
