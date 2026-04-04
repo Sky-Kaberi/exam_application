@@ -29,7 +29,12 @@ $applicant = requireApplicantLoginForPage('login.php');
         button.secondary, a.secondary { background:#5b6b83; }
         .status { margin-top:10px; font-size:14px; }
         img { max-width:220px; max-height:140px; border:1px solid #d7e0ed; border-radius:8px; padding:4px; }
+        .address-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+        .address-block { border:1px solid #d7e0ed; border-radius:8px; padding:10px; background:#f9fbff; }
+        .address-block h4 { margin:0 0 8px; color:#123f7f; font-size:15px; }
+        .address-line { margin:0; color:#132235; font-weight:600; line-height:1.45; word-break:break-word; }
         @media (max-width:768px){ .row{grid-template-columns:1fr;} }
+        @media (max-width:768px){ .address-grid{grid-template-columns:1fr;} }
     </style>
 </head>
 <body>
@@ -63,6 +68,44 @@ function renderSection(title, fields, editTab) {
   return `<div class="section"><h3>${title}</h3><div class="row">${rows}</div><div style="margin-top:10px;"><a href="step2.php?tab=${editTab}" class="secondary">Edit</a></div></div>`;
 }
 
+function clean(v) {
+  return (v === null || v === undefined) ? '' : String(v).trim();
+}
+
+function joinParts(parts) {
+  const values = parts.map(clean).filter(Boolean);
+  return values.length ? values.join(', ') : '';
+}
+
+function formatAddressLines(address, prefix) {
+  const line1 = joinParts([address?.[`${prefix}_premises`], address?.[`${prefix}_sub_locality`]]);
+  const line2 = joinParts([address?.[`${prefix}_locality`] || address?.[`${prefix}_district`], address?.[`${prefix}_state`]]);
+  const country = clean(address?.[`${prefix}_country`]);
+  const pin = clean(address?.[`${prefix}_pin_code`]);
+  const line3 = country && pin ? `${country} – ${pin}` : (country || pin);
+  const lines = [line1, line2, line3].filter(Boolean);
+  return lines.length ? lines : ['-'];
+}
+
+function renderAddressBlock(title, lines) {
+  const lineNodes = lines.map((line) => `<p class="address-line">${value(line)}</p>`).join('');
+  return `<div class="address-block"><h4>${title}</h4>${lineNodes}</div>`;
+}
+
+function renderAddressSection(address) {
+  const corrLines = formatAddressLines(address, 'corr');
+  const permLines = formatAddressLines(address, 'perm');
+  return `
+    <div class="section">
+      <h3>Address Details</h3>
+      <div class="address-grid">
+        ${renderAddressBlock('Correspondence Address', corrLines)}
+        ${renderAddressBlock('Permanent Address', permLines)}
+      </div>
+      <div style="margin-top:10px;"><a href="step2.php?tab=address" class="secondary">Edit</a></div>
+    </div>`;
+}
+
 async function loadPreview() {
   const response = await fetch(`../ajax/preview.php?t=${Date.now()}`, { cache: 'no-store' });
   const data = await response.json();
@@ -90,12 +133,7 @@ async function loadPreview() {
       ['PwD', d.basic?.pwd_status], ['Disability Type', d.basic?.disability_type], ['Disability %', d.basic?.disability_percentage], ['Qualifying Exam', d.basic?.qualifying_examination],
       ['Year of Passing', d.basic?.year_of_passing], ['Institute', d.basic?.institute_name_address]
     ], 'basic'),
-    renderSection('Step 2 - Correspondence & Permanent Address', [
-      ['Corr Premises', d.address?.corr_premises], ['Corr Sub-locality', d.address?.corr_sub_locality], ['Corr Locality', d.address?.corr_locality], ['Corr Country', d.address?.corr_country],
-      ['Corr State', d.address?.corr_state], ['Corr District', d.address?.corr_district], ['Corr PIN', d.address?.corr_pin_code], ['Same as Correspondence', Number(d.address?.same_as_correspondence) ? 'Yes' : 'No'],
-      ['Perm Premises', d.address?.perm_premises], ['Perm Sub-locality', d.address?.perm_sub_locality], ['Perm Locality', d.address?.perm_locality], ['Perm Country', d.address?.perm_country],
-      ['Perm State', d.address?.perm_state], ['Perm District', d.address?.perm_district], ['Perm PIN', d.address?.perm_pin_code]
-    ], 'address'),
+    renderAddressSection(d.address),
     renderSection('Step 2 - Course Selection', [
       ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city], ['Application Fee', formatFee(d.courses?.application_fee)]
     ], 'courses'),
