@@ -56,6 +56,7 @@ const statusNode = document.getElementById('previewStatus');
 const finalSubmitBtn = document.getElementById('finalSubmitBtn');
 
 function value(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
+function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
 
 function renderSection(title, fields, editTab) {
   const rows = fields.map(([k, v]) => `<div class="item"><span class="k">${k}</span><span class="v">${value(v)}</span></div>`).join('');
@@ -96,7 +97,7 @@ async function loadPreview() {
       ['Perm State', d.address?.perm_state], ['Perm District', d.address?.perm_district], ['Perm PIN', d.address?.perm_pin_code]
     ], 'address'),
     renderSection('Step 2 - Course Selection', [
-      ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city]
+      ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city], ['Application Fee', formatFee(d.courses?.application_fee)]
     ], 'courses'),
     `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="../public/${d.images.photo_path}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="../public/${d.images.signature_path}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
   ].join('');

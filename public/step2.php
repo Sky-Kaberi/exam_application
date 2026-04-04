@@ -42,6 +42,8 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
         .status { margin-top:10px; font-size:13px; }
         .upload-preview img { max-width:220px; max-height:140px; border:1px solid #d4dbe6; border-radius:8px; padding:4px; background:#fff; }
         ul.instructions { margin:0; padding-left:18px; color:#4c5f79; }
+        .info-box { background:#eef4ff; border:1px solid #bfd0ee; border-radius:8px; padding:10px 12px; margin-bottom:12px; color:#163c70; }
+        .fee-chip { display:inline-block; margin-top:8px; padding:8px 12px; border-radius:999px; background:#184d9b; color:#fff; font-weight:700; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } .header h1{font-size:20px;} }
     </style>
 </head>
@@ -116,6 +118,10 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
 
         <div class="tab-panel" id="tab-courses">
             <form id="coursesForm" novalidate>
+                <div class="info-box">
+                    <div>You may select one course from Group-1, or one course from Group-2, or one course from each group. If you select courses from both groups, the application fee will be INR 6000/-.</div>
+                    <div class="fee-chip">Current payable application fee: <span id="courseFeeDisplay">INR 0/-</span></div>
+                </div>
                 <div class="grid">
                     <div class="field"><label>Course applied for (Group-1)</label><select name="course_group_1"></select><div class="error" data-error-for="course_group_1"></div></div>
                     <div class="field"><label>Course applied for (Group-2)</label><select name="course_group_2"></select><div class="error" data-error-for="course_group_2"></div></div>
@@ -145,6 +151,6 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
     </div>
 </div>
 <script>window.step2InitialTab = <?= json_encode($initialTab) ?>;</script>
-<script src="../assets/js/step2.js?v=20260403"></script>
+<script src="../assets/js/step2.js?v=20260404"></script>
 </body>
 </html>

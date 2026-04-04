@@ -25,6 +25,8 @@ const statuses = {
 
 let addressReference = null;
 let courseOptions = null;
+const baseApplicationFee = 3000;
+const courseFeeDisplay = document.getElementById('courseFeeDisplay');
 let addressListenersBound = false;
 let tabProgress = {
   step2_basic_completed: 0,
@@ -211,10 +213,26 @@ function validateAddress(payload) {
   return errors;
 }
 
+function calculateCourseFee(group1, group2) {
+  const hasGroup1 = Boolean((group1 || '').trim());
+  const hasGroup2 = Boolean((group2 || '').trim());
+  if (hasGroup1 && hasGroup2) return baseApplicationFee * 2;
+  if (hasGroup1 || hasGroup2) return baseApplicationFee;
+  return 0;
+}
+
+function updateCourseFeeDisplay() {
+  if (!courseFeeDisplay) return;
+  const fee = calculateCourseFee(coursesForm.elements.course_group_1.value, coursesForm.elements.course_group_2.value);
+  courseFeeDisplay.textContent = `INR ${fee}/-`;
+}
+
 function validateCourses(payload) {
   const errors = {};
-  if (!payload.course_group_1) errors.course_group_1 = 'Select Group-1 course.';
-  if (!payload.course_group_2) errors.course_group_2 = 'Select Group-2 course.';
+  if (!payload.course_group_1 && !payload.course_group_2) {
+    errors.course_group_1 = 'Select one course from Group-1 or Group-2.';
+    errors.course_group_2 = 'Select one course from Group-1 or Group-2.';
+  }
   if (!payload.exam_city) errors.exam_city = 'Select exam city.';
   return errors;
 }
@@ -338,6 +356,7 @@ async function loadCourseInfo() {
   buildSelect(coursesForm.elements.course_group_1, courseOptions.group_1, data.data.course_group_1 || '');
   buildSelect(coursesForm.elements.course_group_2, courseOptions.group_2, data.data.course_group_2 || '');
   buildSelect(coursesForm.elements.exam_city, courseOptions.exam_cities, data.data.exam_city || '');
+  updateCourseFeeDisplay();
 }
 
 function renderExistingImage(id, path, label, cacheToken = '') {
@@ -378,6 +397,9 @@ coursesForm.addEventListener('submit', async (event) => {
   const payload = Object.fromEntries(new FormData(coursesForm).entries());
   await submitJsonForm(coursesForm, '../ajax/step2_courses.php', payload, 'courses', validateCourses);
 });
+
+coursesForm.elements.course_group_1.addEventListener('change', updateCourseFeeDisplay);
+coursesForm.elements.course_group_2.addEventListener('change', updateCourseFeeDisplay);
 
 imagesForm.addEventListener('submit', async (event) => {
   event.preventDefault();
