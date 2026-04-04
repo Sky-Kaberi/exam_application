@@ -29,7 +29,12 @@ $applicant = requireApplicantLoginForPage('login.php');
         button.secondary, a.secondary { background:#5b6b83; }
         .status { margin-top:10px; font-size:14px; }
         img { max-width:220px; max-height:140px; border:1px solid #d7e0ed; border-radius:8px; padding:4px; }
+        .address-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+        .address-block { border:1px solid #d7e0ed; border-radius:8px; padding:10px; background:#f9fbff; }
+        .address-block h4 { margin:0 0 8px; color:#123f7f; font-size:15px; }
+        .address-line { margin:0; color:#132235; font-weight:600; line-height:1.45; word-break:break-word; }
         @media (max-width:768px){ .row{grid-template-columns:1fr;} }
+        @media (max-width:768px){ .address-grid{grid-template-columns:1fr;} }
     </style>
 </head>
 <body>
@@ -45,7 +50,7 @@ $applicant = requireApplicantLoginForPage('login.php');
         <div id="previewRoot"></div>
         <div class="actions">
             <a href="step2.php" class="secondary">Back to Step 2</a>
-            <button id="finalSubmitBtn">Confirm Preview & Final Submit</button>
+            <button id="finalSubmitBtn">Proceed to Fee Payment</button>
         </div>
         <div class="status" id="previewStatus"></div>
     </div>
@@ -56,6 +61,7 @@ const statusNode = document.getElementById('previewStatus');
 const finalSubmitBtn = document.getElementById('finalSubmitBtn');
 
 function value(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
+function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
 
 function renderSection(title, fields, editTab) {
   const rows = fields.map(([k, v]) => `<div class="item"><span class="k">${k}</span><span class="v">${value(v)}</span></div>`).join('');
@@ -96,14 +102,9 @@ async function loadPreview() {
       ['PwD', d.basic?.pwd_status], ['Disability Type', d.basic?.disability_type], ['Disability %', d.basic?.disability_percentage], ['Qualifying Exam', d.basic?.qualifying_examination],
       ['Year of Passing', d.basic?.year_of_passing], ['Institute', d.basic?.institute_name_address]
     ], 'basic'),
-    renderSection('Step 2 - Correspondence & Permanent Address', [
-      ['Corr Premises', d.address?.corr_premises], ['Corr Sub-locality', d.address?.corr_sub_locality], ['Corr Locality', d.address?.corr_locality], ['Corr Country', d.address?.corr_country],
-      ['Corr State', d.address?.corr_state], ['Corr District', d.address?.corr_district], ['Corr PIN', d.address?.corr_pin_code], ['Same as Correspondence', Number(d.address?.same_as_correspondence) ? 'Yes' : 'No'],
-      ['Perm Premises', d.address?.perm_premises], ['Perm Sub-locality', d.address?.perm_sub_locality], ['Perm Locality', d.address?.perm_locality], ['Perm Country', d.address?.perm_country],
-      ['Perm State', d.address?.perm_state], ['Perm District', d.address?.perm_district], ['Perm PIN', d.address?.perm_pin_code]
-    ], 'address'),
+    renderAddressSection(d.address),
     renderSection('Step 2 - Course Selection', [
-      ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city]
+      ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city], ['Application Fee', formatFee(d.courses?.application_fee)]
     ], 'courses'),
     `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="${cacheBustUrl(d.images.photo_path, cacheToken)}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="${cacheBustUrl(d.images.signature_path, cacheToken)}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
   ].join('');
@@ -131,8 +132,9 @@ finalSubmitBtn.addEventListener('click', async () => {
     return;
   }
 
-  statusNode.textContent = data.message || 'Application submitted successfully.';
+  statusNode.textContent = data.message || 'Preview submitted successfully. Redirecting to fee payment...';
   statusNode.style.color = '#0a7a35';
+  window.location.href = 'step4_fee_payment.php';
 });
 
 loadPreview().catch(() => null);
