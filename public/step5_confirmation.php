@@ -82,10 +82,10 @@ if ($paymentStatus !== 'paid') {
         .doc-header h2 { font-size: 18px; }
         .doc-header p { color: var(--muted); font-size: 14px; }
 
-        .top-grid {
+        .sections-grid {
             margin-top: 14px;
             display: grid;
-            grid-template-columns: 1fr 220px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
             align-items: start;
         }
@@ -96,7 +96,7 @@ if ($paymentStatus !== 'paid') {
             border: 1px solid var(--border);
             padding: 12px;
         }
-        .section { margin-top: 14px; }
+        .section { margin-top: 0; }
         .section h3,
         .summary-card h3,
         .media-card h3 { margin: 0 0 10px 0; font-size: 16px; }
@@ -162,7 +162,6 @@ if ($paymentStatus !== 'paid') {
             font-weight: 700;
         }
         .note-block {
-            margin-top: 14px;
             background: #f8fafc;
         }
         .address-grid {
@@ -195,7 +194,7 @@ if ($paymentStatus !== 'paid') {
 
         @page { size: A4; margin: 12mm; }
         @media (max-width: 860px) {
-            .top-grid { grid-template-columns: 1fr; }
+            .sections-grid { grid-template-columns: 1fr; }
             .kv-grid { grid-template-columns: 1fr; }
             .kv-item { grid-template-columns: 140px 1fr; }
             .kv-item:nth-child(odd) { border-right: none; }
@@ -229,7 +228,8 @@ if ($paymentStatus !== 'paid') {
             .doc-header {
                 background: var(--header-bg) !important;
             }
-            .doc-header, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title, .address-grid, .address-block { break-inside: avoid; }
+            .doc-header, .sections-grid, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title, .address-grid, .address-block { break-inside: avoid; }
+            .sections-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .address-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
         }
     </style>
@@ -366,7 +366,7 @@ async function loadConfirmation() {
   confirmationRoot.innerHTML = `
     ${buildHeader(d.step1, d.courses, d.confirmation_datetime)}
 
-    <section class="top-grid">
+    <section class="sections-grid">
       <div class="summary-card">
         <h3>Application Summary</h3>
         <div class="kv-grid">
@@ -390,32 +390,28 @@ async function loadConfirmation() {
           ${imageBox('Candidate Signature', d.images?.signature_path, 'Candidate Signature')}
         </div>
       </aside>
-    </section>
-
-    ${kvSection('Course / Paper Details', [
-      ['Group-1 Selected Course', d.courses?.course_group_1],
-      ['Group-2 Selected Course', d.courses?.course_group_2],
-      ['Total Papers Selected', totalPapers],
-      ['Application Fee Amount', formatFee(d.courses?.application_fee)]
-    ])}
-
-    ${addressSection(d.address)}
-
-    ${kvSection('Payment Details', [
-      ['Payment Status', d.step1?.payment_status],
-      ['Payment Mode', d.step1?.payment_mode],
-      ['Transaction Reference', d.step1?.transaction_reference],
-      ['Payment Date & Time', d.step1?.payment_datetime],
-      ['Amount Paid', formatFee(d.step1?.payment_amount)],
-      ['Acknowledgement Generated On', d.confirmation_datetime]
-    ])}
-
-    <section class="note-block">
-      <strong>Important Instructions</strong>
-      <ul>
-        <li>The candidate is advised to keep this confirmation page for future reference.</li>
-        <li>This page should be produced at the time of further admission/examination process, if required.</li>
-      </ul>
+      ${kvSection('Course / Paper Details', [
+        ['Group-1 Selected Course', d.courses?.course_group_1],
+        ['Group-2 Selected Course', d.courses?.course_group_2],
+        ['Total Papers Selected', totalPapers],
+        ['Application Fee Amount', formatFee(d.courses?.application_fee)]
+      ])}
+      ${addressSection(d.address)}
+      ${kvSection('Payment Details', [
+        ['Payment Status', d.step1?.payment_status],
+        ['Payment Mode', d.step1?.payment_mode],
+        ['Transaction Reference', d.step1?.transaction_reference],
+        ['Payment Date & Time', d.step1?.payment_datetime],
+        ['Amount Paid', formatFee(d.step1?.payment_amount)],
+        ['Acknowledgement Generated On', d.confirmation_datetime]
+      ])}
+      <section class="note-block">
+        <strong>Important Instructions</strong>
+        <ul>
+          <li>The candidate is advised to keep this confirmation page for future reference.</li>
+          <li>This page should be produced at the time of further admission/examination process, if required.</li>
+        </ul>
+      </section>
     </section>`;
 }
 
