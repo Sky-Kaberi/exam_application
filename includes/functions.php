@@ -23,6 +23,11 @@ function calculateApplicationFee(string $group1, string $group2): int
     return 0;
 }
 
+function generateDemoTransactionReference(): string
+{
+    return 'DEMO' . date('YmdHis') . strtoupper(bin2hex(random_bytes(3)));
+}
+
 function ensureSessionStarted(): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
