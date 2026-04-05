@@ -80,6 +80,23 @@ function value(v) { return (v === null || v === undefined || v === '') ? '-' : v
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
 function areDeclarationsAccepted() { return declarationA.checked && declarationB.checked; }
 
+function syncCheckboxState(checkbox, checked, disabled) {
+  checkbox.checked = checked;
+  checkbox.disabled = disabled;
+
+  if (checked) {
+    checkbox.setAttribute('checked', '');
+  } else {
+    checkbox.removeAttribute('checked');
+  }
+
+  if (disabled) {
+    checkbox.setAttribute('disabled', '');
+  } else {
+    checkbox.removeAttribute('disabled');
+  }
+}
+
 function updatePayButtonState() {
   if (isPaymentAlreadyDone) {
     payBtn.disabled = true;
@@ -109,15 +126,11 @@ function render(data) {
   finalSubmitAfterPaymentBtn.style.display = paid && !finalSubmitted ? 'inline-block' : 'none';
 
   if (paid) {
-    declarationA.checked = true;
-    declarationB.checked = true;
-    declarationA.disabled = true;
-    declarationB.disabled = true;
+    syncCheckboxState(declarationA, true, true);
+    syncCheckboxState(declarationB, true, true);
   } else {
-    declarationA.checked = false;
-    declarationB.checked = false;
-    declarationA.disabled = false;
-    declarationB.disabled = false;
+    syncCheckboxState(declarationA, false, false);
+    syncCheckboxState(declarationB, false, false);
   }
 
   updatePayButtonState();
