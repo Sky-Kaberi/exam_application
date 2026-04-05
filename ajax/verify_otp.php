@@ -15,7 +15,15 @@ $verified = verifyOtpRecord(
     trim((string) ($payload['otp'] ?? ''))
 );
 
+$channel = (string) ($payload['channel'] ?? '');
+$successMessage = 'OTP verified successfully.';
+if ($channel === 'mobile') {
+    $successMessage = 'Mobile No Verified Successfully';
+} elseif ($channel === 'email') {
+    $successMessage = 'Email Id Verified Successfully';
+}
+
 jsonResponse([
     'success' => $verified,
-    'message' => $verified ? 'OTP verified successfully.' : 'Invalid or expired OTP.',
+    'message' => $verified ? $successMessage : 'Invalid or expired OTP.',
 ], $verified ? 200 : 422);

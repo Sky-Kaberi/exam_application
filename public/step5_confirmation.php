@@ -11,7 +11,8 @@ $db = getDb();
 $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
 $paymentStatusStmt->execute(['id' => $applicant['id']]);
 $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'unpaid');
-if ($paymentStatus !== 'paid') {
+$progress = getApplicantProgress($db, (int) $applicant['id']);
+if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === null) {
     header('Location: step4_fee_payment.php');
     exit;
 }
@@ -124,10 +125,7 @@ if ($paymentStatus !== 'paid') {
         .kv-key { background: #f8fafc; color: #374151; font-weight: 600; border-right: 1px solid var(--border); }
         .kv-value { font-weight: 600; word-break: break-word; }
 
-        .media-stack {
-            display: grid;
-            gap: 10px;
-        }
+        .media-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
         .media-box {
             border: 1px solid var(--border);
             padding: 8px;
@@ -239,7 +237,6 @@ if ($paymentStatus !== 'paid') {
 <body>
 <div class="page-wrap">
     <div class="toolbar">
-        <a href="step4_fee_payment.php" class="btn secondary">Back to Fee Payment</a>
         <a href="../ajax/logout.php" class="btn secondary">Logout</a>
         <button id="printBtn" class="btn">Print / Download</button>
     </div>
@@ -339,7 +336,7 @@ function imageBox(label, rawPath, altText) {
   return `<div class="media-box"><div class="media-label">${escapeHtml(label)}</div><img src="${safePath}" alt="${escapeHtml(altText)}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'media-missing', textContent:'Image not available'}));"></div>`;
 }
 
-function buildHeader(step1, courses, confirmationDateTime) {
+function buildHeader(step1, confirmationDateTime) {
   const sessionYear = (confirmationDateTime || '').slice(0, 4) || 'N/A';
   return `
     <header class="doc-header">
@@ -348,7 +345,6 @@ function buildHeader(step1, courses, confirmationDateTime) {
       <p>Session / Year: ${escapeHtml(sessionYear)}</p>
       <h2>Confirmation Page</h2>
       <p>Application Number: <strong>${escapeHtml(step1?.application_id)}</strong></p>
-      <p>Exam City: <strong>${escapeHtml(courses?.exam_city)}</strong></p>
     </header>`;
 }
 
@@ -366,7 +362,7 @@ async function loadConfirmation() {
   const totalPapers = countSelectedPapers(d.courses);
 
   confirmationRoot.innerHTML = `
-    ${buildHeader(d.step1, d.courses, d.confirmation_datetime)}
+    ${buildHeader(d.step1, d.confirmation_datetime)}
 
     <section class="sections-grid">
       <div class="summary-card grid-item">

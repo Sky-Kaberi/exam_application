@@ -32,6 +32,9 @@ if ($progress['final_submitted_at'] === null) {
         a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#184d9b; color:#fff; }
         .secondary { background:#5b6b83; }
         .status { margin-top:10px; font-size:14px; }
+        .declarations { border:1px solid #d7e0ed; border-radius:10px; padding:12px; margin-top:12px; background:#f9fbff; }
+        .declarations h3 { margin:0 0 10px; font-size:15px; color:#123f7f; }
+        .declaration-item { display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; color:#132235; }
     </style>
 </head>
 <body>
@@ -45,10 +48,21 @@ if ($progress['final_submitted_at'] === null) {
     </div>
     <div class="body">
         <div class="box" id="paymentInfo"></div>
+        <div class="declarations">
+            <h3>Declaration</h3>
+            <label class="declaration-item">
+                <input type="checkbox" id="declarationA">
+                <span>I hereby declare that the information furnished in this application is true and correct to the best of my knowledge and belief.</span>
+            </label>
+            <label class="declaration-item">
+                <input type="checkbox" id="declarationB">
+                <span>I understand that if any information is found incorrect at any stage, my candidature may be cancelled.</span>
+            </label>
+        </div>
         <div class="actions">
             <a href="step3_preview.php" class="secondary">Back to Preview</a>
             <button id="payBtn">Simulate Successful Payment</button>
-            <a href="step5_confirmation.php" id="toConfirmation" style="display:none;">Go to Confirmation</a>
+            <button id="finalSubmitAfterPaymentBtn" style="display:none;">Final Submission</button>
         </div>
         <div class="status" id="paymentStatus"></div>
     </div>
@@ -57,7 +71,9 @@ if ($progress['final_submitted_at'] === null) {
 const paymentInfo = document.getElementById('paymentInfo');
 const paymentStatus = document.getElementById('paymentStatus');
 const payBtn = document.getElementById('payBtn');
-const toConfirmation = document.getElementById('toConfirmation');
+const finalSubmitAfterPaymentBtn = document.getElementById('finalSubmitAfterPaymentBtn');
+const declarationA = document.getElementById('declarationA');
+const declarationB = document.getElementById('declarationB');
 
 function value(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
@@ -76,8 +92,22 @@ function render(data) {
   `;
 
   const paid = data.payment_status === 'paid';
+  const finalSubmitted = !!data.payment_final_submitted_at;
   payBtn.style.display = paid ? 'none' : 'inline-block';
-  toConfirmation.style.display = paid ? 'inline-block' : 'none';
+  finalSubmitAfterPaymentBtn.style.display = paid && !finalSubmitted ? 'inline-block' : 'none';
+
+  if (paid) {
+    declarationA.checked = true;
+    declarationB.checked = true;
+    declarationA.disabled = true;
+    declarationB.disabled = true;
+  }
+
+  if (finalSubmitted) {
+    paymentStatus.textContent = 'Final submission already completed. Redirecting to confirmation page...';
+    paymentStatus.style.color = '#0a7a35';
+    window.location.href = 'step5_confirmation.php';
+  }
 }
 
 async function loadPaymentDetails() {
@@ -101,7 +131,11 @@ payBtn.addEventListener('click', async () => {
   const response = await fetch('../ajax/payment.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ demo_success: true })
+    body: JSON.stringify({
+      action: 'pay',
+      declaration_a: declarationA.checked,
+      declaration_b: declarationB.checked
+    })
   });
   const data = await response.json();
 
@@ -115,6 +149,29 @@ payBtn.addEventListener('click', async () => {
   paymentStatus.textContent = data.message || 'Payment successful.';
   paymentStatus.style.color = '#0a7a35';
   await loadPaymentDetails();
+});
+
+finalSubmitAfterPaymentBtn.addEventListener('click', async () => {
+  finalSubmitAfterPaymentBtn.disabled = true;
+  paymentStatus.textContent = '';
+
+  const response = await fetch('../ajax/payment.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'final_submit' })
+  });
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    paymentStatus.textContent = data.message || 'Final submission failed.';
+    paymentStatus.style.color = '#b42318';
+    finalSubmitAfterPaymentBtn.disabled = false;
+    return;
+  }
+
+  paymentStatus.textContent = data.message || 'Final submission successful. Redirecting to confirmation page...';
+  paymentStatus.style.color = '#0a7a35';
+  window.location.href = 'step5_confirmation.php';
 });
 
 loadPaymentDetails().catch(() => null);
