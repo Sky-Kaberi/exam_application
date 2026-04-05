@@ -74,9 +74,20 @@ const payBtn = document.getElementById('payBtn');
 const finalSubmitAfterPaymentBtn = document.getElementById('finalSubmitAfterPaymentBtn');
 const declarationA = document.getElementById('declarationA');
 const declarationB = document.getElementById('declarationB');
+let isPaymentAlreadyDone = false;
 
 function value(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
+function areDeclarationsAccepted() { return declarationA.checked && declarationB.checked; }
+
+function updatePayButtonState() {
+  if (isPaymentAlreadyDone) {
+    payBtn.disabled = true;
+    return;
+  }
+
+  payBtn.disabled = !areDeclarationsAccepted();
+}
 
 function render(data) {
   const selected = [data.course_group_1, data.course_group_2].filter(Boolean).join(' | ') || '-';
@@ -92,6 +103,7 @@ function render(data) {
   `;
 
   const paid = data.payment_status === 'paid';
+  isPaymentAlreadyDone = paid;
   const finalSubmitted = !!data.payment_final_submitted_at;
   payBtn.style.display = paid ? 'none' : 'inline-block';
   finalSubmitAfterPaymentBtn.style.display = paid && !finalSubmitted ? 'inline-block' : 'none';
@@ -101,7 +113,14 @@ function render(data) {
     declarationB.checked = true;
     declarationA.disabled = true;
     declarationB.disabled = true;
+  } else {
+    declarationA.checked = false;
+    declarationB.checked = false;
+    declarationA.disabled = false;
+    declarationB.disabled = false;
   }
+
+  updatePayButtonState();
 
   if (finalSubmitted) {
     paymentStatus.textContent = 'Final submission already completed. Redirecting to confirmation page...';
@@ -125,6 +144,12 @@ async function loadPaymentDetails() {
 }
 
 payBtn.addEventListener('click', async () => {
+  if (!areDeclarationsAccepted()) {
+    paymentStatus.textContent = 'Please accept both declarations before payment.';
+    paymentStatus.style.color = '#b42318';
+    return;
+  }
+
   payBtn.disabled = true;
   paymentStatus.textContent = '';
 
@@ -150,6 +175,9 @@ payBtn.addEventListener('click', async () => {
   paymentStatus.style.color = '#0a7a35';
   await loadPaymentDetails();
 });
+
+declarationA.addEventListener('change', updatePayButtonState);
+declarationB.addEventListener('change', updatePayButtonState);
 
 finalSubmitAfterPaymentBtn.addEventListener('click', async () => {
   finalSubmitAfterPaymentBtn.disabled = true;
