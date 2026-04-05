@@ -8,15 +8,18 @@ require_once __DIR__ . '/../includes/functions.php';
 
 $applicant = requireApplicantLoginForPage('login.php');
 $db = getDb();
+
 $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
 $paymentStatusStmt->execute(['id' => $applicant['id']]);
 $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'unpaid');
+
 $progress = getApplicantProgress($db, (int) $applicant['id']);
 if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === null) {
     header('Location: step4_fee_payment.php');
     exit;
 }
-?><!DOCTYPE html>
+?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,13 +27,16 @@ if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === nul
     <title>Confirmation Page</title>
     <style>
         :root {
-            --ink: #1a1a1a;
-            --muted: #4b5563;
-            --border: #cfd6df;
-            --header-bg: #f1f5f9;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --border: #d6dde8;
+            --header-bg: #f3f6fb;
             --paper-bg: #ffffff;
+            --panel-bg: #fbfcfe;
         }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             padding: 20px;
@@ -38,10 +44,12 @@ if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === nul
             color: var(--ink);
             background: #eef2f7;
         }
+
         .page-wrap {
-            max-width: 960px;
+            max-width: 1100px;
             margin: 0 auto;
         }
+
         .toolbar {
             display: flex;
             justify-content: flex-end;
@@ -49,6 +57,7 @@ if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === nul
             flex-wrap: wrap;
             margin-bottom: 14px;
         }
+
         .btn {
             padding: 10px 14px;
             border: 1px solid #1f2937;
@@ -59,10 +68,12 @@ if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === nul
             font-size: 14px;
             cursor: pointer;
         }
+
         .btn.secondary {
             background: #6b7280;
             border-color: #6b7280;
         }
+
         .document {
             background: var(--paper-bg);
             border: 1px solid var(--border);
@@ -70,167 +81,318 @@ if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === nul
             padding: 22px;
             border-radius: 8px;
         }
+
         .doc-header {
             text-align: center;
             border: 1px solid var(--border);
-            padding: 14px;
+            padding: 14px 16px;
             background: var(--header-bg);
+            margin-bottom: 14px;
         }
+
         .doc-header h1,
         .doc-header h2,
-        .doc-header p { margin: 4px 0; }
-        .doc-header h1 { font-size: 21px; letter-spacing: 0.2px; }
-        .doc-header h2 { font-size: 18px; }
-        .doc-header p { color: var(--muted); font-size: 14px; }
+        .doc-header p {
+            margin: 4px 0;
+        }
 
-        .sections-grid {
-            margin-top: 14px;
+        .doc-header h1 {
+            font-size: 22px;
+            letter-spacing: 0.2px;
+        }
+
+        .doc-header h2 {
+            font-size: 19px;
+        }
+
+        .doc-header p {
+            color: #4b5563;
+            font-size: 14px;
+        }
+
+        .main-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(12, minmax(0, 1fr));
             gap: 14px;
             align-items: start;
         }
-        .sections-grid > * { min-width: 0; }
-        .grid-item {
+
+        .card {
             border: 1px solid var(--border);
-            padding: 12px;
             background: #fff;
+            min-width: 0;
         }
-        .summary-card,
-        .media-card,
-        .section,
-        .note-block {
-            margin-top: 0;
+
+        .card-header {
+            background: #f8fafc;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 700;
         }
-        .section h3,
-        .summary-card h3,
-        .media-card h3 { margin: 0 0 10px 0; font-size: 16px; }
+
+        .card-body {
+            padding: 12px;
+        }
+
+        .span-8 { grid-column: span 8; }
+        .span-6 { grid-column: span 6; }
+        .span-4 { grid-column: span 4; }
+        .span-12 { grid-column: span 12; }
 
         .kv-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0;
             border: 1px solid var(--border);
             border-bottom: none;
         }
+
         .kv-item {
             display: grid;
-            grid-template-columns: 170px 1fr;
+            grid-template-columns: 170px minmax(0, 1fr);
+            min-height: 42px;
             border-bottom: 1px solid var(--border);
-            min-height: 38px;
         }
-        .kv-item:nth-child(odd) { border-right: 1px solid var(--border); }
-        .kv-key,
-        .kv-value { padding: 9px 10px; font-size: 14px; }
-        .kv-key { background: #f8fafc; color: #374151; font-weight: 600; border-right: 1px solid var(--border); }
-        .kv-value { font-weight: 600; word-break: break-word; }
 
-        .media-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .kv-item:nth-child(odd) {
+            border-right: 1px solid var(--border);
+        }
+
+        .kv-key,
+        .kv-value {
+            padding: 10px;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .kv-key {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            border-right: 1px solid var(--border);
+        }
+
+        .kv-value {
+            font-weight: 600;
+            background: #fff;
+        }
+
+        .media-stack {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
         .media-box {
             border: 1px solid var(--border);
-            padding: 8px;
-            text-align: center;
-            min-height: 130px;
+            background: var(--panel-bg);
+            padding: 10px;
+            min-height: 220px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            gap: 8px;
+            justify-content: flex-start;
+            align-items: stretch;
         }
+
         .media-label {
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             color: #374151;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.25px;
             text-transform: uppercase;
+            margin-bottom: 8px;
+            text-align: center;
         }
-        .media-box img {
-            width: 100%;
-            height: 95px;
+
+        .media-preview {
+            flex: 1;
+            border: 1px dashed var(--border);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 170px;
+            overflow: hidden;
+        }
+
+        .media-preview img {
+            max-width: 100%;
+            max-height: 160px;
             object-fit: contain;
-            object-position: center;
+            display: block;
         }
+
         .media-missing {
             color: #6b7280;
             font-size: 13px;
-            border: 1px dashed var(--border);
-            padding: 20px 8px;
+            text-align: center;
+            padding: 16px;
         }
-        .section-title {
-            background: #f8fafc;
-            padding: 10px;
-            font-size: 15px;
-            font-weight: 700;
-        }
-        .note-block {
-            background: #f8fafc;
-        }
+
         .address-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
+
         .address-block {
             border: 1px solid var(--border);
-            padding: 10px;
-            min-height: 130px;
+            background: var(--panel-bg);
+            padding: 12px;
+            min-height: 150px;
         }
+
         .address-block h4 {
             margin: 0 0 8px 0;
             font-size: 15px;
+            color: #111827;
         }
+
         .address-line {
-            margin: 0;
+            margin: 0 0 6px 0;
             line-height: 1.45;
             font-weight: 600;
             word-break: break-word;
         }
-        .note-block ul { margin: 8px 0 0 20px; padding: 0; }
-        .note-block li { margin-bottom: 6px; font-size: 14px; }
+
+        .instructions {
+            background: #f8fafc;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
         .status {
             margin-top: 10px;
             font-size: 14px;
             color: #b42318;
         }
 
-        @page { size: A4; margin: 12mm; }
-        @media (max-width: 860px) {
-            .sections-grid { grid-template-columns: 1fr; }
-            .kv-grid { grid-template-columns: 1fr; }
-            .kv-item { grid-template-columns: 140px 1fr; }
-            .kv-item:nth-child(odd) { border-right: none; }
-            .address-grid { grid-template-columns: 1fr; }
+        @page {
+            size: A4;
+            margin: 10mm;
         }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .span-8,
+            .span-6,
+            .span-4,
+            .span-12 {
+                grid-column: span 1;
+            }
+
+            .kv-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kv-item {
+                grid-template-columns: 140px minmax(0, 1fr);
+            }
+
+            .kv-item:nth-child(odd) {
+                border-right: none;
+            }
+
+            .media-stack,
+            .address-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media print {
             :root {
-                --border: #b9c3d0;
+                --border: #bcc7d6;
                 --header-bg: #eef3fb;
+                --panel-bg: #fcfdff;
             }
-            html, body { width: 210mm; }
+
+            html, body {
+                width: 210mm;
+            }
+
             body {
-                background: #fff;
-                padding: 0;
                 margin: 0;
+                padding: 0;
+                background: #fff;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .page-wrap {
                 max-width: none;
                 width: 100%;
                 margin: 0;
             }
-            .toolbar, .status { display: none !important; }
+
+            .toolbar,
+            .status {
+                display: none !important;
+            }
+
             .document {
                 box-shadow: none;
                 border: 1px solid var(--border);
                 border-radius: 0;
-                padding: 12px;
+                padding: 10px;
             }
-            .doc-header {
-                background: var(--header-bg) !important;
+
+            .doc-header,
+            .card,
+            .address-block,
+            .media-box,
+            .kv-grid,
+            .kv-item {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
-            .doc-header, .sections-grid, .summary-card, .media-card, .section, .note-block, .kv-grid, .section-title, .address-grid, .address-block { break-inside: avoid; }
-            .sections-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .address-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+            .main-grid {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .span-8 { grid-column: span 8; }
+            .span-6 { grid-column: span 6; }
+            .span-4 { grid-column: span 4; }
+            .span-12 { grid-column: span 12; }
+
+            .media-stack {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .media-box {
+                min-height: 185px;
+            }
+
+            .media-preview {
+                min-height: 140px;
+            }
+
+            .media-preview img {
+                max-height: 130px;
+            }
+
+            .address-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .address-block {
+                min-height: 120px;
+            }
         }
     </style>
 </head>
@@ -250,172 +412,211 @@ const confirmationRoot = document.getElementById('confirmationRoot');
 const confirmationStatus = document.getElementById('confirmationStatus');
 
 function value(v) {
-  return (v === null || v === undefined || v === '') ? '-' : String(v);
+    return (v === null || v === undefined || v === '') ? '-' : String(v);
 }
 
 function formatFee(v) {
-  return Number(v) > 0 ? `INR ${Number(v).toLocaleString('en-IN')}/-` : '-';
+    return Number(v) > 0 ? `INR ${Number(v).toLocaleString('en-IN')}/-` : '-';
 }
 
 function escapeHtml(v) {
-  return value(v)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    return value(v)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }
 
 function countSelectedPapers(courses) {
-  let count = 0;
-  if (courses?.course_group_1) count += 1;
-  if (courses?.course_group_2) count += 1;
-  return count;
+    let count = 0;
+    if (courses?.course_group_1) count += 1;
+    if (courses?.course_group_2) count += 1;
+    return count;
 }
 
 function kvItem(label, itemValue) {
-  return `
-    <div class="kv-item">
-      <div class="kv-key">${escapeHtml(label)}</div>
-      <div class="kv-value">${escapeHtml(itemValue)}</div>
-    </div>`;
+    return `
+        <div class="kv-item">
+            <div class="kv-key">${escapeHtml(label)}</div>
+            <div class="kv-value">${escapeHtml(itemValue)}</div>
+        </div>`;
 }
 
-function kvSection(title, fields) {
-  const rows = fields.map(([label, rowValue]) => kvItem(label, rowValue)).join('');
-  return `
-    <section class="section grid-item">
-      <div class="section-title">${escapeHtml(title)}</div>
-      <div class="kv-grid">${rows}</div>
-    </section>`;
+function kvGrid(fields) {
+    return fields.map(([label, rowValue]) => kvItem(label, rowValue)).join('');
+}
+
+function sectionCard(title, bodyHtml, spanClass = 'span-12') {
+    return `
+        <section class="card ${spanClass}">
+            <div class="card-header">${escapeHtml(title)}</div>
+            <div class="card-body">${bodyHtml}</div>
+        </section>`;
 }
 
 function clean(v) {
-  return (v === null || v === undefined) ? '' : String(v).trim();
+    return (v === null || v === undefined) ? '' : String(v).trim();
 }
 
 function joinParts(parts) {
-  const values = parts.map(clean).filter(Boolean);
-  return values.length ? values.join(', ') : '';
+    const values = parts.map(clean).filter(Boolean);
+    return values.length ? values.join(', ') : '';
 }
 
 function formatAddressLines(address, prefix) {
-  const line1 = joinParts([address?.[`${prefix}_premises`], address?.[`${prefix}_sub_locality`]]);
-  const line2 = joinParts([address?.[`${prefix}_locality`] || address?.[`${prefix}_district`], address?.[`${prefix}_state`]]);
-  const country = clean(address?.[`${prefix}_country`]);
-  const pin = clean(address?.[`${prefix}_pin_code`]);
-  const line3 = country && pin ? `${country} – ${pin}` : (country || pin);
-  const lines = [line1, line2, line3].filter(Boolean);
-  return lines.length ? lines : ['-'];
+    const lines = [
+        clean(address?.[`${prefix}_premises`]),
+        clean(address?.[`${prefix}_sub_locality`]),
+        joinParts([
+            address?.[`${prefix}_locality`],
+            address?.[`${prefix}_district`]
+        ]),
+        joinParts([
+            address?.[`${prefix}_state`],
+            address?.[`${prefix}_country`]
+        ]),
+        clean(address?.[`${prefix}_pin_code`]) ? `PIN: ${clean(address?.[`${prefix}_pin_code`])}` : ''
+    ].filter(Boolean);
+
+    return lines.length ? lines : ['-'];
 }
 
 function addressBlock(title, lines) {
-  const lineMarkup = lines.map((line) => `<p class="address-line">${escapeHtml(line)}</p>`).join('');
-  return `<article class="address-block"><h4>${escapeHtml(title)}</h4>${lineMarkup}</article>`;
-}
-
-function addressSection(address) {
-  const corrLines = formatAddressLines(address, 'corr');
-  const permLines = formatAddressLines(address, 'perm');
-  return `
-    <section class="section grid-item">
-      <div class="section-title">Address Details</div>
-      <div class="address-grid">
-        ${addressBlock('Correspondence Address', corrLines)}
-        ${addressBlock('Permanent Address', permLines)}
-      </div>
-    </section>`;
+    return `
+        <article class="address-block">
+            <h4>${escapeHtml(title)}</h4>
+            ${lines.map(line => `<p class="address-line">${escapeHtml(line)}</p>`).join('')}
+        </article>`;
 }
 
 function imageBox(label, rawPath, altText) {
-  if (!rawPath) {
-    return `<div class="media-box"><div class="media-label">${escapeHtml(label)}</div><div class="media-missing">Image not available</div></div>`;
-  }
+    if (!rawPath) {
+        return `
+            <div class="media-box">
+                <div class="media-label">${escapeHtml(label)}</div>
+                <div class="media-preview">
+                    <div class="media-missing">Image not available</div>
+                </div>
+            </div>`;
+    }
 
-  const safePath = `../public/${String(rawPath).replace(/^\/+/, '')}`;
-  return `<div class="media-box"><div class="media-label">${escapeHtml(label)}</div><img src="${safePath}" alt="${escapeHtml(altText)}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'media-missing', textContent:'Image not available'}));"></div>`;
+    const safePath = `../public/${String(rawPath).replace(/^\/+/, '')}`;
+
+    return `
+        <div class="media-box">
+            <div class="media-label">${escapeHtml(label)}</div>
+            <div class="media-preview">
+                <img
+                    src="${safePath}"
+                    alt="${escapeHtml(altText)}"
+                    onerror="this.parentNode.innerHTML='<div class=&quot;media-missing&quot;>Image not available</div>';"
+                >
+            </div>
+        </div>`;
 }
 
 function buildHeader(step1, confirmationDateTime) {
-  const sessionYear = (confirmationDateTime || '').slice(0, 4) || 'N/A';
-  return `
-    <header class="doc-header">
-      <h1>National Examination Board</h1>
-      <p>Entrance Examination Application</p>
-      <p>Session / Year: ${escapeHtml(sessionYear)}</p>
-      <h2>Confirmation Page</h2>
-      <p>Application Number: <strong>${escapeHtml(step1?.application_id)}</strong></p>
-    </header>`;
+    const sessionYear = (confirmationDateTime || '').slice(0, 4) || 'N/A';
+    return `
+        <header class="doc-header">
+            <h1>National Examination Board</h1>
+            <p>Entrance Examination Application</p>
+            <p>Session / Year: ${escapeHtml(sessionYear)}</p>
+            <h2>Confirmation Page</h2>
+            <p>Application Number: <strong>${escapeHtml(step1?.application_id)}</strong></p>
+        </header>`;
 }
 
 async function loadConfirmation() {
-  const response = await fetch(`../ajax/confirmation.php?t=${Date.now()}`);
-  const data = await response.json();
+    const response = await fetch(`../ajax/confirmation.php?t=${Date.now()}`);
+    const data = await response.json();
 
-  if (!response.ok || !data.success) {
-    confirmationStatus.textContent = data.message || 'Unable to load confirmation page.';
-    confirmationRoot.innerHTML = '';
-    return;
-  }
+    if (!response.ok || !data.success) {
+        confirmationStatus.textContent = data.message || 'Unable to load confirmation page.';
+        confirmationRoot.innerHTML = '';
+        return;
+    }
 
-  const d = data.data || {};
-  const totalPapers = countSelectedPapers(d.courses);
+    const d = data.data || {};
+    const totalPapers = countSelectedPapers(d.courses);
 
-  confirmationRoot.innerHTML = `
-    ${buildHeader(d.step1, d.confirmation_datetime)}
-
-    <section class="sections-grid">
-      <div class="summary-card grid-item">
-        <h3>Application Summary</h3>
+    const summaryHtml = `
         <div class="kv-grid">
-          ${kvItem('Application Number', d.step1?.application_id)}
-          ${kvItem('Candidate Name', d.step1?.candidate_name)}
-          ${kvItem("Father's Name", d.step1?.father_name)}
-          ${kvItem("Mother's Name", d.step1?.mother_name)}
-          ${kvItem('Date of Birth', d.step1?.date_of_birth)}
-          ${kvItem('Gender', d.step1?.gender)}
-          ${kvItem('Mobile Number', d.step1?.mobile_no)}
-          ${kvItem('Email Address', d.step1?.email_id)}
-          ${kvItem('Category', d.basic?.category)}
-          ${kvItem('Domicile', d.basic?.domicile)}
-        </div>
-      </div>
+            ${kvGrid([
+                ['Application Number', d.step1?.application_id],
+                ['Candidate Name', d.step1?.candidate_name],
+                ["Father's Name", d.step1?.father_name],
+                ["Mother's Name", d.step1?.mother_name],
+                ['Date of Birth', d.step1?.date_of_birth],
+                ['Gender', d.step1?.gender],
+                ['Mobile Number', d.step1?.mobile_no],
+                ['Email Address', d.step1?.email_id],
+                ['Category', d.basic?.category],
+                ['Domicile', d.basic?.domicile]
+            ])}
+        </div>`;
 
-      <aside class="media-card grid-item" aria-label="Candidate images">
-        <h3>Candidate Images</h3>
+    const imagesHtml = `
         <div class="media-stack">
-          ${imageBox('Candidate Photograph', d.images?.photo_path, 'Candidate Photograph')}
-          ${imageBox('Candidate Signature', d.images?.signature_path, 'Candidate Signature')}
+            ${imageBox('Candidate Photograph', d.images?.photo_path, 'Candidate Photograph')}
+            ${imageBox('Candidate Signature', d.images?.signature_path, 'Candidate Signature')}
+        </div>`;
+
+    const courseHtml = `
+        <div class="kv-grid">
+            ${kvGrid([
+                ['Group-1 Selected Course', d.courses?.course_group_1],
+                ['Group-2 Selected Course', d.courses?.course_group_2],
+                ['Total Papers Selected', totalPapers],
+                ['Application Fee Amount', formatFee(d.courses?.application_fee)]
+            ])}
+        </div>`;
+
+    const paymentHtml = `
+        <div class="kv-grid">
+            ${kvGrid([
+                ['Payment Status', d.step1?.payment_status],
+                ['Payment Mode', d.step1?.payment_mode],
+                ['Transaction Reference', d.step1?.transaction_reference],
+                ['Payment Date & Time', d.step1?.payment_datetime],
+                ['Amount Paid', formatFee(d.step1?.payment_amount)],
+                ['Acknowledgement Generated On', d.confirmation_datetime]
+            ])}
+        </div>`;
+
+    const addressHtml = `
+        <div class="address-grid">
+            ${addressBlock('Correspondence Address', formatAddressLines(d.address, 'corr'))}
+            ${addressBlock('Permanent Address', formatAddressLines(d.address, 'perm'))}
+        </div>`;
+
+    const instructionsHtml = `
+        <div class="instructions">
+            <ul>
+                <li>The candidate is advised to keep this confirmation page for future reference.</li>
+                <li>This page should be produced at the time of further admission/examination process, if required.</li>
+            </ul>
+        </div>`;
+
+    confirmationRoot.innerHTML = `
+        ${buildHeader(d.step1, d.confirmation_datetime)}
+
+        <div class="main-grid">
+            ${sectionCard('Application Summary', summaryHtml, 'span-8')}
+            ${sectionCard('Candidate Images', imagesHtml, 'span-4')}
+            ${sectionCard('Course / Paper Details', courseHtml, 'span-6')}
+            ${sectionCard('Payment Details', paymentHtml, 'span-6')}
+            ${sectionCard('Address Details', addressHtml, 'span-12')}
+            ${sectionCard('Important Instructions', instructionsHtml, 'span-12')}
         </div>
-      </aside>
-      ${kvSection('Course / Paper Details', [
-        ['Group-1 Selected Course', d.courses?.course_group_1],
-        ['Group-2 Selected Course', d.courses?.course_group_2],
-        ['Total Papers Selected', totalPapers],
-        ['Application Fee Amount', formatFee(d.courses?.application_fee)]
-      ])}
-      ${addressSection(d.address)}
-      ${kvSection('Payment Details', [
-        ['Payment Status', d.step1?.payment_status],
-        ['Payment Mode', d.step1?.payment_mode],
-        ['Transaction Reference', d.step1?.transaction_reference],
-        ['Payment Date & Time', d.step1?.payment_datetime],
-        ['Amount Paid', formatFee(d.step1?.payment_amount)],
-        ['Acknowledgement Generated On', d.confirmation_datetime]
-      ])}
-      <section class="note-block grid-item">
-        <strong>Important Instructions</strong>
-        <ul>
-          <li>The candidate is advised to keep this confirmation page for future reference.</li>
-          <li>This page should be produced at the time of further admission/examination process, if required.</li>
-        </ul>
-      </section>
-    </section>`;
+    `;
 }
 
 document.getElementById('printBtn').addEventListener('click', () => window.print());
+
 loadConfirmation().catch(() => {
-  confirmationStatus.textContent = 'Unable to load confirmation page.';
+    confirmationStatus.textContent = 'Unable to load confirmation page.';
 });
 </script>
 </body>
