@@ -7,6 +7,11 @@ session_start();
 require_once __DIR__ . '/../includes/functions.php';
 
 $applicant = requireApplicantLoginForPage('login.php');
+$db = getDb();
+if (isApplicationProcessCompleted($db, (int) $applicant['id'])) {
+    header('Location: step5_confirmation.php');
+    exit;
+}
 $initialTab = (string) ($_GET['tab'] ?? 'basic');
 if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
     $initialTab = 'basic';

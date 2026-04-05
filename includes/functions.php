@@ -333,6 +333,34 @@ function detectResumeTab(array $progress): string
     return 'preview';
 }
 
+function isApplicationProcessCompleted(PDO $db, int $applicantId): bool
+{
+    $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
+    $paymentStatusStmt->execute(['id' => $applicantId]);
+    $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'unpaid');
+
+    if ($paymentStatus !== 'paid') {
+        return false;
+    }
+
+    $progress = getApplicantProgress($db, $applicantId);
+    return $progress['payment_final_submitted_at'] !== null;
+}
+
+function resolveApplicantPostLoginRedirect(PDO $db, int $applicantId): string
+{
+    if (isApplicationProcessCompleted($db, $applicantId)) {
+        return '../public/step5_confirmation.php';
+    }
+
+    $progress = getApplicantProgress($db, $applicantId);
+    $resumeTab = detectResumeTab($progress);
+
+    return $resumeTab === 'preview'
+        ? '../public/step3_preview.php'
+        : '../public/step2.php?tab=' . urlencode($resumeTab);
+}
+
 function validateStep2BasicInput(array $data): array
 {
     $errors = [];

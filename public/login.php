@@ -6,8 +6,10 @@ session_start();
 
 require_once __DIR__ . '/../includes/functions.php';
 
-if (getLoggedInApplicantSession() !== null) {
-    header('Location: step2.php');
+$loggedInApplicant = getLoggedInApplicantSession();
+if ($loggedInApplicant !== null) {
+    $db = getDb();
+    header('Location: ' . resolveApplicantPostLoginRedirect($db, (int) $loggedInApplicant['id']));
     exit;
 }
 
