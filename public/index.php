@@ -17,7 +17,11 @@ $captchaChallenge = createLocalCaptchaChallenge();
     <style>
         body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:24px; }
         .container { max-width: 960px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
-        .header { background:#184d9b; color:#fff; padding:20px 24px; }
+        .header { background:#184d9b; color:#fff; padding:20px 24px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+        .header h1 { margin:0 0 8px; }
+        .header p { margin:0; }
+        .header-login-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.55); border-radius:999px; padding:8px 12px; white-space:nowrap; font-size:13px; }
+        .header-login-link:hover { background:rgba(255,255,255,.12); }
         .content { padding:24px; }
         .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
         .field, .field-full { display:flex; flex-direction:column; gap:6px; }
@@ -41,8 +45,11 @@ $captchaChallenge = createLocalCaptchaChallenge();
 <body>
 <div class="container">
     <div class="header">
-        <h1>Online Registration - Step 1</h1>
-        <p>Create your profile, verify mobile/email through OTP, and generate the application ID.</p>
+        <div>
+            <h1>Online Registration - Step 1</h1>
+            <p>Create your profile, verify mobile/email through OTP, and generate the application ID.</p>
+        </div>
+        <a class="header-login-link" href="login.php">Already created account? Login here</a>
     </div>
     <div class="content">
         <div class="app-box" id="appBox"></div>
