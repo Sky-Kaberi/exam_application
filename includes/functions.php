@@ -275,7 +275,7 @@ function validateStep2CoursesInput(array $data): array
 
 function upsertApplicantProgress(PDO $db, int $applicantId, array $fields): void
 {
-    $allowedFields = ['step2_basic_completed', 'step2_address_completed', 'step2_courses_completed', 'step2_images_completed', 'last_tab', 'final_submitted_at'];
+    $allowedFields = ['step2_basic_completed', 'step2_address_completed', 'step2_courses_completed', 'step2_images_completed', 'last_tab', 'final_submitted_at', 'payment_final_submitted_at'];
     $setParts = [];
     $params = ['applicant_id' => $applicantId];
 
@@ -300,7 +300,7 @@ function upsertApplicantProgress(PDO $db, int $applicantId, array $fields): void
 
 function getApplicantProgress(PDO $db, int $applicantId): array
 {
-    $stmt = $db->prepare('SELECT step2_basic_completed, step2_address_completed, step2_courses_completed, step2_images_completed, final_submitted_at, last_tab FROM applicant_progress WHERE applicant_id = :applicant_id LIMIT 1');
+    $stmt = $db->prepare('SELECT step2_basic_completed, step2_address_completed, step2_courses_completed, step2_images_completed, final_submitted_at, payment_final_submitted_at, last_tab FROM applicant_progress WHERE applicant_id = :applicant_id LIMIT 1');
     $stmt->execute(['applicant_id' => $applicantId]);
     $progress = $stmt->fetch();
 
@@ -310,6 +310,7 @@ function getApplicantProgress(PDO $db, int $applicantId): array
         'step2_courses_completed' => 0,
         'step2_images_completed' => 0,
         'final_submitted_at' => null,
+        'payment_final_submitted_at' => null,
         'last_tab' => 'basic',
     ];
 }
@@ -624,6 +625,40 @@ function sendEmailOtp(string $recipient, string $otp): bool
         return false;
     }
 }
+
+function sendApplicationSubmissionEmail(string $recipient, string $applicationId, string $candidateName): bool
+{
+    include_once("../class/class.phpmailer.php");
+
+    $subject = 'Application Submitted Successfully';
+    $content = "Dear {$candidateName},\n\n"
+        . "Your application has been submitted successfully.\n"
+        . "Application Number: {$applicationId}\n\n"
+        . "Please keep this application number for future reference.\n\n"
+        . "Regards,\nWBJEEB";
+
+    try {
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->From = "admin@wbjeeb.in";
+        $mail->FromName = "WBJEEB";
+        $mail->AddAddress($recipient);
+        $mail->Subject = $subject;
+        $mail->IsHTML(false);
+        $mail->Body = $content;
+
+        if (!$mail->Send()) {
+            error_log("Mailer Error: " . $mail->ErrorInfo);
+            return false;
+        }
+
+        return true;
+    } catch (Exception $e) {
+        error_log("Mailer Exception: " . $e->getMessage());
+        return false;
+    }
+}
+
 function verifyOtpRecord(PDO $db, string $channel, string $recipient, string $otp): bool
 {
     try {

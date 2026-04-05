@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS applicant_progress (
     step2_courses_completed TINYINT(1) NOT NULL DEFAULT 0,
     step2_images_completed TINYINT(1) NOT NULL DEFAULT 0,
     final_submitted_at DATETIME NULL,
+    payment_final_submitted_at DATETIME NULL,
     last_tab VARCHAR(30) NOT NULL DEFAULT 'basic',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

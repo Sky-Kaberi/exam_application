@@ -19,6 +19,11 @@ if (!is_array($step1) || (string) ($step1['payment_status'] ?? 'unpaid') !== 'pa
     jsonResponse(['success' => false, 'message' => 'Payment pending. Confirmation is available only after successful payment.'], 403);
 }
 
+$progress = getApplicantProgress($db, (int) $applicant['id']);
+if ($progress['payment_final_submitted_at'] === null) {
+    jsonResponse(['success' => false, 'message' => 'Please complete final submission after payment to view confirmation.'], 403);
+}
+
 $basicStmt = $db->prepare('SELECT nationality, domicile, religion, category, sub_category_details, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :id LIMIT 1');
 $basicStmt->execute(['id' => $applicant['id']]);
 $basic = $basicStmt->fetch();

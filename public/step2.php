@@ -83,7 +83,7 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
                     <div class="field"><label>Year of Passing</label><input type="text" name="year_of_passing" maxlength="4"><div class="error" data-error-for="year_of_passing"></div></div>
                     <div class="field full"><label>Institute Name and address</label><textarea name="institute_name_address"></textarea><div class="error" data-error-for="institute_name_address"></div></div>
                 </div>
-                <div class="actions"><button type="submit">Save Basic Info</button><button type="button" class="secondary" data-next-tab="address">Save & Continue</button></div>
+                <div class="actions"><button type="submit">Submit</button><button type="button" class="secondary" data-next-tab="address">Submit &amp; Go to Next Section</button></div>
                 <div class="status" id="basicStatus"></div>
             </form>
         </div>

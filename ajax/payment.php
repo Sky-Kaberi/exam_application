@@ -47,8 +47,26 @@ $applicationFee = isset($courses['application_fee']) && (int) $courses['applicat
     : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $payload = decodeJsonRequestBody();
+    $action = (string) ($payload['action'] ?? 'pay');
+
+    if ($action === 'final_submit') {
+        if ((string) ($application['payment_status'] ?? 'unpaid') !== 'paid') {
+            jsonResponse(['success' => false, 'message' => 'Please complete payment first.'], 422);
+        }
+
+        upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
+        jsonResponse(['success' => true, 'message' => 'Final submission completed successfully.']);
+    }
+
     if ((string) ($application['payment_status'] ?? 'unpaid') === 'paid') {
         jsonResponse(['success' => true, 'message' => 'Payment already completed.', 'data' => ['payment_status' => 'paid']]);
+    }
+
+    $declarationA = (bool) ($payload['declaration_a'] ?? false);
+    $declarationB = (bool) ($payload['declaration_b'] ?? false);
+    if (!$declarationA || !$declarationB) {
+        jsonResponse(['success' => false, 'message' => 'Please accept both declarations before payment.'], 422);
     }
 
     $transactionReference = generateDemoTransactionReference();
@@ -97,6 +115,7 @@ jsonResponse([
         'payment_datetime' => $application['payment_datetime'] ?? null,
         'transaction_reference' => $application['transaction_reference'] ?? null,
         'payment_demo_flag' => $application['payment_demo_flag'] ?? 0,
+        'payment_final_submitted_at' => $progress['payment_final_submitted_at'] ?? null,
         'payable_amount' => $applicationFee,
         'course_group_1' => $courses['course_group_1'] ?? '',
         'course_group_2' => $courses['course_group_2'] ?? '',

@@ -88,10 +88,16 @@ try {
 }
 
 $_SESSION['new_application_id'] = $applicationId;
+$submissionEmailSent = sendApplicationSubmissionEmail(
+    (string) $payload['email_id'],
+    $applicationId,
+    (string) $payload['candidate_name']
+);
 
 jsonResponse([
     'success' => true,
     'application_id' => $applicationId,
     'redirect_to' => '../public/login.php?application_id=' . urlencode($applicationId),
     'message' => 'Step 1 registration completed.',
+    'email_sent' => $submissionEmailSent,
 ]);
