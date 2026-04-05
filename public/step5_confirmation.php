@@ -517,7 +517,7 @@ function imageBox(label, rawPath, altText) {
 }
 
 function buildHeader(step1, confirmationDateTime) {
-    const sessionYear = (confirmationDateTime || '').slice(0, 4) || 'N/A';
+    const sessionYear = '2025';
     return `
         <header class="doc-header">
             <h1>National Examination Board</h1>
