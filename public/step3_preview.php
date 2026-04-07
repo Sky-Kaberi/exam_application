@@ -63,9 +63,10 @@ const finalSubmitBtn = document.getElementById('finalSubmitBtn');
 function value(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
 
-function renderSection(title, fields, editTab) {
+function renderSection(title, fields, editTab, showEdit = true) {
   const rows = fields.map(([k, v]) => `<div class="item"><span class="k">${k}</span><span class="v">${value(v)}</span></div>`).join('');
-  return `<div class="section"><h3>${title}</h3><div class="row">${rows}</div><div style="margin-top:10px;"><a href="step2.php?tab=${editTab}" class="secondary">Edit</a></div></div>`;
+  const editAction = showEdit ? `<div style="margin-top:10px;"><a href="step2.php?tab=${editTab}" class="secondary">Edit</a></div>` : '';
+  return `<div class="section"><h3>${title}</h3><div class="row">${rows}</div>${editAction}</div>`;
 }
 
 function clean(v) {
@@ -127,7 +128,7 @@ async function loadPreview() {
     renderSection('Step 1 - Registration', [
       ['Candidate Name', d.step1?.candidate_name], ['Father Name', d.step1?.father_name], ['Mother Name', d.step1?.mother_name], ['Date of Birth', d.step1?.date_of_birth],
       ['Gender', d.step1?.gender], ['Identification Type', d.step1?.identification_type], ['Identification No', d.step1?.identification_no], ['Mobile', d.step1?.mobile_no], ['Email', d.step1?.email_id]
-    ], 'basic'),
+    ], 'basic', false),
     renderSection('Step 2 - Basic Info', [
       ['Nationality', d.basic?.nationality], ['Domicile', d.basic?.domicile], ['Religion', d.basic?.religion], ['Category', d.basic?.category],
       ['PwD', d.basic?.pwd_status], ['Disability Type', d.basic?.disability_type], ['Disability %', d.basic?.disability_percentage], ['Qualifying Exam', d.basic?.qualifying_examination],
