@@ -38,7 +38,9 @@ $captchaChallenge = createLocalCaptchaChallenge();
         label.error { color:#b42318; font-size:12px; margin-top:4px; }
         input.error, select.error { border-color:#b42318; background:#fff7f7; }
         .app-box { background:#eef4ff; border:1px dashed #184d9b; padding:14px; border-radius:8px; margin-bottom:20px; display:none; }
+        .captcha-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .captcha-expression { display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:10px 16px; border-radius:10px; background:#f2f6ff; border:1px solid #c8d7f7; color:#123c7a; font-size:22px; font-weight:700; letter-spacing:.5px; }
+        button.ghost { background:#eef2f8; color:#1d3557; border:1px solid #cad5e2; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } }
     </style>
 </head>
@@ -94,11 +96,14 @@ $captchaChallenge = createLocalCaptchaChallenge();
                 </div>
                 <div class="field-full">
                     <label>CAPTCHA Verification</label>
-                    <div class="captcha-expression" aria-label="CAPTCHA challenge">
-                        <?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>
+                    <div class="captcha-row">
+                        <div class="captcha-expression" id="captchaQuestion" aria-label="CAPTCHA challenge">
+                            <?= htmlspecialchars($captchaChallenge['question'], ENT_QUOTES, 'UTF-8') ?>
+                        </div>
+                        <button type="button" class="ghost" id="refreshCaptchaBtn">Refresh CAPTCHA</button>
                     </div>
                     <input type="text" name="captcha_answer" maxlength="3" placeholder="Enter CAPTCHA answer">
-                    <small>Solve this simple math CAPTCHA to confirm you're a real human user. Refresh the page for a new challenge.</small>
+                    <small>Solve this simple math CAPTCHA to confirm you're a real human user. You can refresh for a new challenge.</small>
                 </div>
                 <div class="field-full">
                     <button type="submit" id="submitBtn">Complete Step 1 Registration</button>
@@ -110,6 +115,6 @@ $captchaChallenge = createLocalCaptchaChallenge();
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
-<script src="../assets/js/registration.js?v=20260401"></script>
+<script src="../assets/js/registration.js?v=20260407"></script>
 </body>
 </html>

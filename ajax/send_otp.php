@@ -22,5 +22,21 @@ if ($channel === 'email' && !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
     jsonResponse(['success' => false, 'message' => 'Enter a valid email address.'], 422);
 }
 
+
+$existingApplicantStmt = null;
+if ($channel === 'mobile') {
+    $existingApplicantStmt = getDb()->prepare('SELECT id FROM applicants WHERE mobile_no = :recipient LIMIT 1');
+} else {
+    $existingApplicantStmt = getDb()->prepare('SELECT id FROM applicants WHERE LOWER(email_id) = LOWER(:recipient) LIMIT 1');
+}
+$existingApplicantStmt->execute(['recipient' => $recipient]);
+if ($existingApplicantStmt->fetch()) {
+    $fieldLabel = $channel === 'mobile' ? 'Mobile number' : 'Email ID';
+    jsonResponse([
+        'success' => false,
+        'message' => $fieldLabel . ' already exists. Please use a new ' . strtolower($fieldLabel) . '.',
+    ], 409);
+}
+
 $result = createOtpRecord(getDb(), $channel, $recipient);
 jsonResponse($result, $result['success'] ? 200 : 429);

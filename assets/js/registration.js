@@ -266,3 +266,21 @@ form.addEventListener('submit', async (event) => {
     alert(error.message || 'Registration failed');
   }
 });
+
+
+document.getElementById('refreshCaptchaBtn')?.addEventListener('click', async () => {
+  const captchaNode = document.getElementById('captchaQuestion');
+  const captchaAnswerField = form.elements.captcha_answer;
+
+  try {
+    const data = await postData('../ajax/refresh_captcha.php', {});
+    if (captchaNode && data.question) {
+      captchaNode.textContent = data.question;
+    }
+    if (captchaAnswerField) {
+      captchaAnswerField.value = '';
+    }
+  } catch (error) {
+    alert(error.message || 'Unable to refresh CAPTCHA right now.');
+  }
+});
