@@ -164,7 +164,6 @@ function sectionEnd(): string
     <?= renderField('Transaction Reference', $applicant['transaction_reference'] ?? '') ?>
     <?= renderField('Final Submitted At', $progress['final_submitted_at'] ?? '') ?>
     <?= renderField('Payment Final Submitted At', $progress['payment_final_submitted_at'] ?? '') ?>
-    <?= renderField('Last Tab', $progress['last_tab'] ?? '') ?>
     <?= sectionEnd() ?>
 </div>
 </body>
