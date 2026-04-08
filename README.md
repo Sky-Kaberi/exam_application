@@ -28,3 +28,14 @@ This scaffold writes OTP values to `logs/otp.log` for development/testing. Repla
 
 ## CAPTCHA behavior
 This scaffold uses a built-in math CAPTCHA (no third-party dependency). The challenge is session-based and validated during registration submit.
+
+## Admin module
+- Admin login: `/admin/login.php`
+- Dashboard with filter + pagination: `/admin/dashboard.php`
+- Candidate details: `/admin/candidate_details.php?id={applicant_id}`
+- Logout: `/admin/logout.php`
+
+### Admin user setup
+Run `sql/migrations/20260408_add_admin_users.sql` to create `admin_users` and seed a default admin.
+
+> Important: replace the seeded password hash with your own `password_hash(...)` generated value before production use.
