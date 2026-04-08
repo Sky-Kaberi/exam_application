@@ -167,6 +167,47 @@ function requireApplicantLoginForJson(): array
     jsonResponse(['success' => false, 'message' => 'Login required.'], 401);
 }
 
+
+function loginAdminSession(array $admin): void
+{
+    ensureSessionStarted();
+    session_regenerate_id(true);
+    $_SESSION['admin_auth'] = [
+        'id' => (int) $admin['id'],
+        'username' => (string) $admin['username'],
+        'full_name' => (string) ($admin['full_name'] ?? ''),
+    ];
+}
+
+function logoutAdminSession(): void
+{
+    ensureSessionStarted();
+    unset($_SESSION['admin_auth']);
+}
+
+function getLoggedInAdminSession(): ?array
+{
+    ensureSessionStarted();
+    $auth = $_SESSION['admin_auth'] ?? null;
+
+    if (!is_array($auth) || !isset($auth['id'], $auth['username'])) {
+        return null;
+    }
+
+    return $auth;
+}
+
+function requireAdminLoginForPage(string $redirectPath = 'login.php'): array
+{
+    $admin = getLoggedInAdminSession();
+    if ($admin !== null) {
+        return $admin;
+    }
+
+    header('Location: ' . $redirectPath);
+    exit;
+}
+
 function getCategoryOptionsByDomicile(string $domicile): array
 {
     if ($domicile === 'West Bengal') {
