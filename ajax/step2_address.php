@@ -11,6 +11,10 @@ bootstrapJsonErrorHandling();
 $applicant = requireApplicantLoginForJson();
 $db = getDb();
 
+if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $db->prepare('SELECT corr_premises, corr_sub_locality, corr_locality, corr_country, corr_state, corr_district, corr_pin_code, same_as_correspondence, perm_premises, perm_sub_locality, perm_locality, perm_country, perm_state, perm_district, perm_pin_code FROM applicant_step2_address WHERE applicant_id = :applicant_id LIMIT 1');
     $stmt->execute(['applicant_id' => $applicant['id']]);

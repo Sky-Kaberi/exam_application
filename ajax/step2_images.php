@@ -11,6 +11,10 @@ bootstrapJsonErrorHandling();
 $applicant = requireApplicantLoginForJson();
 $db = getDb();
 
+if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+}
+
 $photoRules = ['min' => 10 * 1024, 'max' => 200 * 1024];
 $signRules = ['min' => 4 * 1024, 'max' => 30 * 1024];
 

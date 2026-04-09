@@ -26,7 +26,7 @@ if ($progress['final_submitted_at'] === null) {
 }
 
 $applicationStmt = $db->prepare(
-    'SELECT application_id, candidate_name, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_demo_flag
+    'SELECT application_id, candidate_name, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_demo_flag
      FROM applicants
      WHERE id = :id
      LIMIT 1'
@@ -47,6 +47,10 @@ $applicationFee = isset($courses['application_fee']) && (int) $courses['applicat
     : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isApplicantFinalSubmitted($db, (int) $applicant['id'])) {
+        jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+    }
+
     $payload = decodeJsonRequestBody();
     $action = (string) ($payload['action'] ?? 'pay');
 
@@ -55,8 +59,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'Please complete payment first.'], 422);
         }
 
-        upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
-        jsonResponse(['success' => true, 'message' => 'Final submission completed successfully.']);
+        $submittedAt = date('Y-m-d H:i:s');
+        upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => $submittedAt]);
+
+        $emailSent = sendFinalSubmissionConfirmationEmail(
+            (string) ($application['email_id'] ?? ''),
+            (string) ($application['application_id'] ?? ''),
+            (string) ($application['candidate_name'] ?? '')
+        );
+
+        jsonResponse([
+            'success' => true,
+            'message' => $emailSent
+                ? 'Final submission completed successfully. Confirmation email sent.'
+                : 'Final submission completed successfully. Confirmation email could not be sent right now.',
+        ]);
     }
 
     if ((string) ($application['payment_status'] ?? 'unpaid') === 'paid') {

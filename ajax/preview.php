@@ -11,6 +11,10 @@ bootstrapJsonErrorHandling();
 $applicant = requireApplicantLoginForJson();
 $db = getDb();
 
+if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $progress = getApplicantProgress($db, (int) $applicant['id']);
     if ((int) $progress['step2_basic_completed'] !== 1 || (int) $progress['step2_address_completed'] !== 1 || (int) $progress['step2_courses_completed'] !== 1 || (int) $progress['step2_images_completed'] !== 1) {

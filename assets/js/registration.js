@@ -1,6 +1,8 @@
 const form = document.getElementById('registrationForm');
 const appBox = document.getElementById('appBox');
 const verificationState = { mobile: false, email: false };
+const otpTimers = { mobile: null, email: null };
+const otpResendLimitSeconds = Number(window.otpResendLimitSeconds || 60);
 const salutations = ['late', 'mr', 'ms', 'mrs', 'dr', 'prof'];
 
 const identificationTypeField = form.elements.identification_type;
@@ -54,6 +56,42 @@ function setStatus(id, message, ok) {
     return;
   }
   node.className = `status ${ok ? 'success' : 'error'}`;
+}
+
+function setSendOtpButtonState(channel, secondsRemaining) {
+  const buttonId = channel === 'mobile' ? 'sendMobileOtp' : 'sendEmailOtp';
+  const button = document.getElementById(buttonId);
+  if (!button) return;
+
+  if (secondsRemaining > 0) {
+    button.disabled = true;
+    button.textContent = `Send OTP (${String(secondsRemaining).padStart(2, '0')}s)`;
+    return;
+  }
+
+  button.disabled = false;
+  button.textContent = channel === 'mobile' ? 'Send Mobile OTP' : 'Send Email OTP';
+}
+
+function startOtpCooldown(channel) {
+  if (otpTimers[channel]) {
+    clearInterval(otpTimers[channel]);
+    otpTimers[channel] = null;
+  }
+
+  let remaining = otpResendLimitSeconds;
+  setSendOtpButtonState(channel, remaining);
+
+  otpTimers[channel] = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(otpTimers[channel]);
+      otpTimers[channel] = null;
+      setSendOtpButtonState(channel, 0);
+      return;
+    }
+    setSendOtpButtonState(channel, remaining);
+  }, 1000);
 }
 
 function includesSalutation(value) {
@@ -191,7 +229,13 @@ async function sendOtp(channel) {
     if (channel === 'mobile' && data.display_otp) {
       message = `${message} OTP: ${data.display_otp}`;
     }
+    if (channel === 'email' && data.success) {
+      message = `${message} Please check SPAM folder if not delivered in Primary inbox.`;
+    }
     setStatus(`${channel}Status`, message, data.success);
+    if (data.success) {
+      startOtpCooldown(channel);
+    }
   } catch (error) {
     verificationState[channel] = false;
     setStatus(`${channel}Status`, error.message, false);
