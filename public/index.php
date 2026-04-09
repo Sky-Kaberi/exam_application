@@ -92,6 +92,7 @@ $captchaChallenge = createLocalCaptchaChallenge();
                         <input type="text" name="email_otp" maxlength="6" placeholder="Enter email OTP">
                         <button type="button" class="secondary" id="verifyEmailOtp">Verify Email OTP</button>
                     </div>
+                    <small id="emailOtpHint">Please check SPAM folder if not delivered in Primary inbox.</small>
                     <div class="status" id="emailStatus"></div>
                 </div>
                 <div class="field-full">
@@ -115,6 +116,9 @@ $captchaChallenge = createLocalCaptchaChallenge();
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
-<script src="../assets/js/registration.js?v=20260407"></script>
+<script>
+window.otpResendLimitSeconds = <?= (int) OTP_RESEND_LIMIT_SECONDS ?>;
+</script>
+<script src="../assets/js/registration.js?v=20260409"></script>
 </body>
 </html>

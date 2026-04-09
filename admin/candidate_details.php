@@ -56,6 +56,11 @@ function sectionEnd(): string
 {
     return '</div></div></div>';
 }
+
+function resolveApplicationStatus(array $progress): string
+{
+    return !empty($progress['payment_final_submitted_at']) ? 'Submitted' : 'Draft';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -157,6 +162,7 @@ function sectionEnd(): string
     <?= sectionEnd() ?>
 
     <?= sectionStart('Payment / Submission Details') ?>
+    <?= renderField('Application Status', resolveApplicationStatus($progress)) ?>
     <?= renderField('Payment Status', $applicant['payment_status'] ?? '') ?>
     <?= renderField('Payment Mode', $applicant['payment_mode'] ?? '') ?>
     <?= renderField('Payment Amount', $applicant['payment_amount'] ?? '') ?>

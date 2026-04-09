@@ -98,12 +98,7 @@ function syncCheckboxState(checkbox, checked, disabled) {
 }
 
 function updatePayButtonState() {
-  if (isPaymentAlreadyDone) {
-    payBtn.disabled = true;
-    return;
-  }
-
-  payBtn.disabled = !areDeclarationsAccepted();
+  payBtn.disabled = isPaymentAlreadyDone;
 }
 
 function render(data) {
@@ -158,6 +153,7 @@ async function loadPaymentDetails() {
 
 payBtn.addEventListener('click', async () => {
   if (!areDeclarationsAccepted()) {
+    alert('Please check both declaration checkboxes before proceeding to payment.');
     paymentStatus.textContent = 'Please accept both declarations before payment.';
     paymentStatus.style.color = '#b42318';
     return;

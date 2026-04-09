@@ -388,6 +388,12 @@ function isApplicationProcessCompleted(PDO $db, int $applicantId): bool
     return $progress['payment_final_submitted_at'] !== null;
 }
 
+function isApplicantFinalSubmitted(PDO $db, int $applicantId): bool
+{
+    $progress = getApplicantProgress($db, $applicantId);
+    return $progress['payment_final_submitted_at'] !== null;
+}
+
 function resolveApplicantPostLoginRedirect(PDO $db, int $applicantId): string
 {
     if (isApplicationProcessCompleted($db, $applicantId)) {
@@ -699,11 +705,44 @@ function sendApplicationSubmissionEmail(string $recipient, string $applicationId
 {
     include_once("../class/class.phpmailer.php");
 
+    $subject = 'Account Created Successfully';
+    $content = "Dear {$candidateName},\n\n"
+        . "Account has been created. Please login & complete all the steps.\n"
+        . "Application Number: {$applicationId}\n\n"
+        . "Please keep this application number for future reference.\n\n"
+        . "Regards,\nWBJEEB";
+
+    try {
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->From = "admin@wbjeeb.in";
+        $mail->FromName = "WBJEEB";
+        $mail->AddAddress($recipient);
+        $mail->Subject = $subject;
+        $mail->IsHTML(false);
+        $mail->Body = $content;
+
+        if (!$mail->Send()) {
+            error_log("Mailer Error: " . $mail->ErrorInfo);
+            return false;
+        }
+
+        return true;
+    } catch (Exception $e) {
+        error_log("Mailer Exception: " . $e->getMessage());
+        return false;
+    }
+}
+
+function sendFinalSubmissionConfirmationEmail(string $recipient, string $applicationId, string $candidateName): bool
+{
+    include_once("../class/class.phpmailer.php");
+
     $subject = 'Application Submitted Successfully';
     $content = "Dear {$candidateName},\n\n"
         . "Your application has been submitted successfully.\n"
         . "Application Number: {$applicationId}\n\n"
-        . "Please keep this application number for future reference.\n\n"
+        . "No further changes are allowed after final submission.\n\n"
         . "Regards,\nWBJEEB";
 
     try {

@@ -11,6 +11,10 @@ bootstrapJsonErrorHandling();
 $applicant = requireApplicantLoginForJson();
 $db = getDb();
 
+if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $db->prepare('SELECT course_group_1, course_group_2, exam_city, application_fee FROM applicant_step2_courses WHERE applicant_id = :applicant_id LIMIT 1');
     $stmt->execute(['applicant_id' => $applicant['id']]);
