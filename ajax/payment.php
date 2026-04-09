@@ -77,7 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ((string) ($application['payment_status'] ?? 'unpaid') === 'paid') {
-        jsonResponse(['success' => true, 'message' => 'Payment already completed.', 'data' => ['payment_status' => 'paid']]);
+        jsonResponse([
+            'success' => true,
+            'message' => 'Payment already completed. Confirmation email is sent only after final submission.',
+            'data' => ['payment_status' => 'paid'],
+        ]);
     }
 
     $declarationA = (bool) ($payload['declaration_a'] ?? false);
@@ -111,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     jsonResponse([
         'success' => true,
-        'message' => 'Demo payment successful.',
+        'message' => 'Demo payment successful. Please complete final submission to receive the confirmation email.',
         'data' => [
             'payment_status' => 'paid',
             'payment_amount' => $applicationFee,
