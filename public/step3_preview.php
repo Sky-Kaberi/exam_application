@@ -69,46 +69,15 @@ function renderSection(title, fields, editTab, showEdit = true) {
   return `<div class="section"><h3>${title}</h3><div class="row">${rows}</div>${editAction}</div>`;
 }
 
-function clean(v) {
-  return (v === null || v === undefined) ? '' : String(v).trim();
-}
-
-function joinParts(parts) {
-  const values = parts.map(clean).filter(Boolean);
-  return values.length ? values.join(', ') : '';
-}
-
-function formatAddressLines(address, prefix) {
-  const line1 = joinParts([address?.[`${prefix}_premises`], address?.[`${prefix}_sub_locality`]]);
-  const line2 = joinParts([address?.[`${prefix}_locality`] || address?.[`${prefix}_district`], address?.[`${prefix}_state`]]);
-  const country = clean(address?.[`${prefix}_country`]);
-  const pin = clean(address?.[`${prefix}_pin_code`]);
-  const line3 = country && pin ? `${country} – ${pin}` : (country || pin);
-  const lines = [line1, line2, line3].filter(Boolean);
-  return lines.length ? lines : ['-'];
-}
-
-function renderAddressBlock(title, lines) {
-  const lineNodes = lines.map((line) => `<p class="address-line">${value(line)}</p>`).join('');
-  return `<div class="address-block"><h4>${title}</h4>${lineNodes}</div>`;
-}
-
-function renderAddressSection(address) {
-  const corrLines = formatAddressLines(address, 'corr');
-  const permLines = formatAddressLines(address, 'perm');
-  return `
-    <div class="section">
-      <h3>Address Details</h3>
-      <div class="address-grid">
-        ${renderAddressBlock('Correspondence Address', corrLines)}
-        ${renderAddressBlock('Permanent Address', permLines)}
-      </div>
-      <div style="margin-top:10px;"><a href="step2.php?tab=address" class="secondary">Edit</a></div>
-    </div>`;
+function cacheBustUrl(path, token) {
+  if (!path) return '';
+  const separator = path.includes('?') ? '&' : '?';
+  return `../public/${path}${separator}t=${encodeURIComponent(token)}`;
 }
 
 async function loadPreview() {
-  const response = await fetch(`../ajax/preview.php?t=${Date.now()}`, { cache: 'no-store' });
+  const cacheToken = Date.now();
+  const response = await fetch(`../ajax/preview.php?t=${cacheToken}`, { cache: 'no-store' });
   const data = await response.json();
 
   if (!response.ok || !data.success) {
@@ -138,7 +107,7 @@ async function loadPreview() {
     renderSection('Step 2 - Course Selection', [
       ['Group-1 Course', d.courses?.course_group_1], ['Group-2 Course', d.courses?.course_group_2], ['Exam City', d.courses?.exam_city], ['Application Fee', formatFee(d.courses?.application_fee)]
     ], 'courses'),
-    `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="../public/${d.images.photo_path}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="../public/${d.images.signature_path}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
+    `<div class="section"><h3>Step 2 - Images</h3><div class="row"><div class="item"><span class="k">Photograph</span>${d.images?.photo_path ? `<img src="${cacheBustUrl(d.images.photo_path, cacheToken)}" alt="Photograph">` : '<span class="v">-</span>'}</div><div class="item"><span class="k">Signature</span>${d.images?.signature_path ? `<img src="${cacheBustUrl(d.images.signature_path, cacheToken)}" alt="Signature">` : '<span class="v">-</span>'}</div></div><div style="margin-top:10px;"><a href="step2.php?tab=image" class="secondary">Edit</a></div></div>`
   ].join('');
 }
 
