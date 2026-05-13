@@ -1,6 +1,17 @@
 CREATE DATABASE IF NOT EXISTS exam_application CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE exam_application;
 
+CREATE TABLE IF NOT EXISTS admin_users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    full_name VARCHAR(150) NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    last_login_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS applicants (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_id VARCHAR(30) NOT NULL UNIQUE,
@@ -17,17 +28,27 @@ CREATE TABLE IF NOT EXISTS applicants (
     registrant_ip_address VARCHAR(45) NULL,
     email_verified_at DATETIME NULL,
     mobile_verified_at DATETIME NULL,
-    payment_status ENUM('unpaid', 'payment_submitted', 'paid') NOT NULL DEFAULT 'unpaid',
+    payment_status ENUM('not_submitted', 'pending_verification', 'paid', 'rejected') NOT NULL DEFAULT 'not_submitted',
     payment_mode VARCHAR(30) NULL,
     payment_amount INT UNSIGNED NULL,
     payment_datetime DATETIME NULL,
     transaction_reference VARCHAR(80) NULL,
     payment_receipt_file VARCHAR(255) NULL,
+    sbi_receipt_path VARCHAR(255) NULL,
+    sbi_reference_no VARCHAR(80) NULL,
+    sbi_payment_date DATE NULL,
+    payment_submitted_at DATETIME NULL,
+    payment_verified_at DATETIME NULL,
+    payment_verified_by BIGINT UNSIGNED NULL,
+    payment_admin_note TEXT NULL,
     payment_demo_flag TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_candidate_name (candidate_name),
-    INDEX idx_identification (identification_type, identification_no)
+    INDEX idx_identification (identification_type, identification_no),
+    INDEX idx_payment_status (payment_status),
+    INDEX idx_payment_verified_by (payment_verified_by),
+    CONSTRAINT fk_applicants_payment_verified_by FOREIGN KEY (payment_verified_by) REFERENCES admin_users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS applicant_step2_basic (
@@ -121,16 +142,4 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_channel_recipient (channel, recipient),
     INDEX idx_expiry (expires_at)
-);
-
-
-CREATE TABLE IF NOT EXISTS admin_users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    full_name VARCHAR(150) NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    is_active TINYINT(1) NOT NULL DEFAULT 1,
-    last_login_at DATETIME NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

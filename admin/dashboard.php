@@ -57,7 +57,7 @@ if ($filters['domicile'] !== '') {
     $conditions[] = 'b.domicile = :domicile';
     $params['domicile'] = $filters['domicile'];
 }
-if (in_array($filters['payment_status'], ['paid', 'unpaid'], true)) {
+if (in_array($filters['payment_status'], ['not_submitted', 'pending_verification', 'paid', 'rejected'], true)) {
     $conditions[] = 'a.payment_status = :payment_status';
     $params['payment_status'] = $filters['payment_status'];
 }
@@ -138,7 +138,8 @@ unset($queryWithoutPage['page']);
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container-fluid">
-        <span class="navbar-brand">Admin Dashboard</span>
+        <a class="navbar-brand" href="dashboard.php">Admin Dashboard</a>
+        <a class="btn btn-sm btn-light" href="payment_verification.php">Payment Verification</a>
         <div class="ms-auto text-white">
             Welcome, <?= htmlspecialchars((string) ($admin['full_name'] ?: $admin['username']), ENT_QUOTES, 'UTF-8') ?> |
             <a class="text-white" href="logout.php">Logout</a>
@@ -166,8 +167,10 @@ unset($queryWithoutPage['page']);
                 <div class="col-12 col-md-2">
                     <select class="form-select" name="payment_status">
                         <option value="">Payment Status</option>
+                        <option value="not_submitted" <?= $filters['payment_status'] === 'not_submitted' ? 'selected' : '' ?>>Not Submitted</option>
+                        <option value="pending_verification" <?= $filters['payment_status'] === 'pending_verification' ? 'selected' : '' ?>>Pending Verification</option>
                         <option value="paid" <?= $filters['payment_status'] === 'paid' ? 'selected' : '' ?>>Paid</option>
-                        <option value="unpaid" <?= $filters['payment_status'] === 'unpaid' ? 'selected' : '' ?>>Unpaid</option>
+                        <option value="rejected" <?= $filters['payment_status'] === 'rejected' ? 'selected' : '' ?>>Rejected</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-2">
@@ -236,7 +239,7 @@ unset($queryWithoutPage['page']);
                             <td><?= htmlspecialchars((string) ($row['category'] ?: '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) ($row['domicile'] ?: '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars($courseText !== '' ? $courseText : '-', ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><span class="badge text-bg-<?= $row['payment_status'] === 'paid' ? 'success' : 'secondary' ?>"><?= htmlspecialchars((string) ucfirst((string) $row['payment_status']), ENT_QUOTES, 'UTF-8') ?></span></td>
+                            <td><span class="badge text-bg-<?= $row['payment_status'] === 'paid' ? 'success' : ($row['payment_status'] === 'pending_verification' ? 'warning' : ($row['payment_status'] === 'rejected' ? 'danger' : 'secondary')) ?>"><?= htmlspecialchars(ucwords(str_replace('_', ' ', (string) $row['payment_status'])), ENT_QUOTES, 'UTF-8') ?></span></td>
                             <td><?= htmlspecialchars(applicationStatusLabel($row), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) $row['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><a class="btn btn-sm btn-outline-primary" href="candidate_details.php?id=<?= (int) $row['id'] ?>">View More Details</a></td>

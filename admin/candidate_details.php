@@ -6,7 +6,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/functions.php';
 
-requireAdminLoginForPage('login.php');
+$admin = requireAdminLoginForPage('login.php');
 $db = getDb();
 
 $applicantId = (int) ($_GET['id'] ?? 0);
@@ -166,14 +166,19 @@ function resolveApplicationStatus(array $progress): string
     <?= renderField('Payment Status', $applicant['payment_status'] ?? '') ?>
     <?= renderField('Payment Mode', $applicant['payment_mode'] ?? '') ?>
     <?= renderField('Payment Amount', $applicant['payment_amount'] ?? '') ?>
-    <?= renderField('Payment DateTime', $applicant['payment_datetime'] ?? '') ?>
-    <?= renderField('SBI Collect Reference Number', $applicant['transaction_reference'] ?? '') ?>
+    <?= renderField('Payment Date', $applicant['sbi_payment_date'] ?? ($applicant['payment_datetime'] ?? '')) ?>
+    <?= renderField('SBI Collect Reference Number', $applicant['sbi_reference_no'] ?? ($applicant['transaction_reference'] ?? '')) ?>
+    <?= renderField('Payment Submitted At', $applicant['payment_submitted_at'] ?? '') ?>
+    <?= renderField('Payment Verified At', $applicant['payment_verified_at'] ?? '') ?>
+    <?= renderField('Payment Verified By', $applicant['payment_verified_by'] ?? '') ?>
+    <?= renderField('Admin Note', $applicant['payment_admin_note'] ?? '') ?>
     <div class="col-12 col-md-6 mb-2">
         <div class="border rounded p-2 h-100">
             <small class="text-muted d-block">Payment Receipt</small>
-            <?php if (!empty($applicant['payment_receipt_file'])): ?>
-                <a href="../public/<?= htmlspecialchars((string) $applicant['payment_receipt_file'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">View uploaded receipt</a>
-                <div><small><?= htmlspecialchars((string) $applicant['payment_receipt_file'], ENT_QUOTES, 'UTF-8') ?></small></div>
+            <?php $receiptPath = $applicant['sbi_receipt_path'] ?? $applicant['payment_receipt_file'] ?? ''; ?>
+            <?php if ($receiptPath !== ''): ?>
+                <a href="../public/<?= htmlspecialchars((string) $receiptPath, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">View uploaded receipt</a>
+                <div><small><?= htmlspecialchars((string) $receiptPath, ENT_QUOTES, 'UTF-8') ?></small></div>
             <?php else: ?>
                 <strong>-</strong>
             <?php endif; ?>

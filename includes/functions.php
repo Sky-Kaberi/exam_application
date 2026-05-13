@@ -418,7 +418,7 @@ function isApplicationProcessCompleted(PDO $db, int $applicantId): bool
 {
     $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
     $paymentStatusStmt->execute(['id' => $applicantId]);
-    $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'unpaid');
+    $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted');
 
     if ($paymentStatus !== 'paid') {
         return false;
@@ -442,6 +442,10 @@ function resolveApplicantPostLoginRedirect(PDO $db, int $applicantId): string
 
     $progress = getApplicantProgress($db, $applicantId);
     $resumeTab = detectResumeTab($progress);
+
+    if ($progress['final_submitted_at'] !== null) {
+        return '../public/step4_fee_payment.php';
+    }
 
     return $resumeTab === 'preview'
         ? '../public/step3_preview.php'
