@@ -68,18 +68,18 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
             <input type="hidden" name="action" value="submit_payment">
             <div class="form-grid">
                 <div class="field">
-                    <label for="transactionId">Transaction ID <span aria-hidden="true">*</span></label>
-                    <input type="text" id="transactionId" name="transaction_id" required maxlength="80" autocomplete="off">
+                    <label for="transactionId">SBI Collect Reference Number <span aria-hidden="true">*</span></label>
+                    <input type="text" id="transactionId" name="transaction_id" required maxlength="80" autocomplete="off" aria-required="true">
                     <div class="error" data-error-for="transaction_id"></div>
                 </div>
                 <div class="field">
                     <label for="paymentDate">Payment Date <span aria-hidden="true">*</span></label>
-                    <input type="date" id="paymentDate" name="payment_date" required>
+                    <input type="date" id="paymentDate" name="payment_date" required aria-required="true">
                     <div class="error" data-error-for="payment_date"></div>
                 </div>
                 <div class="field full">
                     <label for="paymentReceipt">Upload SBI Collect Payment Receipt <span aria-hidden="true">*</span></label>
-                    <input type="file" id="paymentReceipt" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                    <input type="file" id="paymentReceipt" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required aria-required="true">
                     <small class="muted">Allowed formats: PDF, JPG, JPEG, PNG. Maximum size: 2MB.</small>
                     <div class="error" data-error-for="payment_receipt"></div>
                 </div>
@@ -132,6 +132,26 @@ function showErrors(errors = {}) {
   });
 }
 
+function validateMandatoryPaymentFields() {
+  const errors = {};
+  const transactionReference = paymentConfirmationForm.elements.transaction_id.value.trim();
+  const paymentDate = paymentConfirmationForm.elements.payment_date.value.trim();
+  const paymentReceipt = paymentConfirmationForm.elements.payment_receipt;
+
+  if (!transactionReference) {
+    errors.transaction_id = 'SBI Collect Reference Number is required.';
+  }
+  if (!paymentDate) {
+    errors.payment_date = 'Payment Date is required.';
+  }
+  if (!paymentReceipt.files || paymentReceipt.files.length === 0) {
+    errors.payment_receipt = 'SBI Collect Payment Receipt upload is required.';
+  }
+
+  showErrors(errors);
+  return Object.keys(errors).length === 0;
+}
+
 function syncCheckboxState(checkbox, checked, disabled) {
   checkbox.checked = checked;
   checkbox.disabled = disabled;
@@ -155,7 +175,7 @@ function render(data) {
     <div class="line"><span class="label">Applicant Name:</span> <span class="value">${escapeHtml(data.candidate_name)}</span></div>
     <div class="line"><span class="label">Selected Papers/Courses:</span> <span class="value">${escapeHtml(selected)}</span></div>
     <div class="line"><span class="label">Payable Amount:</span> <span class="value">${formatFee(data.payable_amount)}</span></div>
-    <div class="line"><span class="label">Transaction ID:</span> <span class="value">${escapeHtml(data.transaction_reference)}</span></div>
+    <div class="line"><span class="label">SBI Collect Reference Number:</span> <span class="value">${escapeHtml(data.transaction_reference)}</span></div>
     <div class="line"><span class="label">Payment Date:</span> <span class="value">${escapeHtml(data.payment_date)}</span></div>
   `;
 
@@ -210,6 +230,12 @@ async function loadPaymentDetails() {
 paymentConfirmationForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearErrors();
+
+  if (!validateMandatoryPaymentFields()) {
+    paymentStatus.textContent = 'Please complete all mandatory payment fields before submitting payment details.';
+    paymentStatus.style.color = '#b42318';
+    return;
+  }
 
   if (!areDeclarationsAccepted()) {
     paymentStatus.textContent = 'Please accept both declarations before submitting payment details.';
