@@ -26,7 +26,7 @@ if ($progress['final_submitted_at'] === null) {
 }
 
 $applicationStmt = $db->prepare(
-    'SELECT application_id, candidate_name, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_demo_flag
+    'SELECT application_id, candidate_name, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_receipt_file, payment_demo_flag
      FROM applicants
      WHERE id = :id
      LIMIT 1'
@@ -46,17 +46,73 @@ $applicationFee = isset($courses['application_fee']) && (int) $courses['applicat
     ? (int) $courses['application_fee']
     : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
 
+function validatePaymentReceiptFile(array $file): ?string
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return 'Payment receipt upload is required.';
+    }
+
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        return 'Payment receipt upload failed. Please retry.';
+    }
+
+    $maxSize = 2 * 1024 * 1024;
+    $size = (int) ($file['size'] ?? 0);
+    if ($size <= 0 || $size > $maxSize) {
+        return 'Payment receipt size must be up to 2MB.';
+    }
+
+    $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+    $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+    if (!in_array($extension, $allowedExtensions, true)) {
+        return 'Payment receipt must be a PDF, JPG, JPEG, or PNG file.';
+    }
+
+    $tmpName = (string) ($file['tmp_name'] ?? '');
+    $mime = '';
+    if (class_exists('finfo')) {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = (string) $finfo->file($tmpName);
+    } else {
+        $mime = (string) mime_content_type($tmpName);
+    }
+
+    $allowedMimeTypes = [
+        'pdf' => ['application/pdf', 'application/x-pdf'],
+        'jpg' => ['image/jpeg', 'image/pjpeg'],
+        'jpeg' => ['image/jpeg', 'image/pjpeg'],
+        'png' => ['image/png'],
+    ];
+
+    if (!in_array($mime, $allowedMimeTypes[$extension] ?? [], true)) {
+        return 'Payment receipt file type does not match the uploaded file.';
+    }
+
+    return null;
+}
+
+function paymentDateForResponse(?string $paymentDatetime): ?string
+{
+    if ($paymentDatetime === null || trim($paymentDatetime) === '') {
+        return null;
+    }
+
+    return substr($paymentDatetime, 0, 10);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isApplicantFinalSubmitted($db, (int) $applicant['id'])) {
         jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
     }
 
-    $payload = decodeJsonRequestBody();
-    $action = (string) ($payload['action'] ?? 'pay');
+    $contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
+    $isJson = stripos($contentType, 'application/json') !== false;
+    $payload = $isJson ? decodeJsonRequestBody() : $_POST;
+    $action = (string) ($payload['action'] ?? 'submit_payment');
 
     if ($action === 'final_submit') {
         if ((string) ($application['payment_status'] ?? 'unpaid') !== 'paid') {
-            jsonResponse(['success' => false, 'message' => 'Please complete payment first.'], 422);
+            jsonResponse(['success' => false, 'message' => 'Payment must be verified as paid before final submission.'], 422);
         }
 
         $submittedAt = date('Y-m-d H:i:s');
@@ -76,22 +132,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
     }
 
+    if ($action !== 'submit_payment') {
+        jsonResponse(['success' => false, 'message' => 'Invalid payment action.'], 400);
+    }
+
     if ((string) ($application['payment_status'] ?? 'unpaid') === 'paid') {
         jsonResponse([
             'success' => true,
-            'message' => 'Payment already completed. Confirmation email is sent only after final submission.',
+            'message' => 'Payment is already verified as paid. Please complete final submission.',
             'data' => ['payment_status' => 'paid'],
         ]);
     }
 
-    $declarationA = (bool) ($payload['declaration_a'] ?? false);
-    $declarationB = (bool) ($payload['declaration_b'] ?? false);
-    if (!$declarationA || !$declarationB) {
-        jsonResponse(['success' => false, 'message' => 'Please accept both declarations before payment.'], 422);
+    $errors = [];
+    $transactionId = trim((string) ($payload['transaction_id'] ?? ''));
+    $paymentDate = trim((string) ($payload['payment_date'] ?? ''));
+    $declarationA = isset($payload['declaration_a']);
+    $declarationB = isset($payload['declaration_b']);
+
+    if ($transactionId === '') {
+        $errors['transaction_id'] = 'Transaction ID is required.';
+    } elseif (mb_strlen($transactionId) > 80) {
+        $errors['transaction_id'] = 'Transaction ID must be 80 characters or fewer.';
     }
 
-    $transactionReference = generateDemoTransactionReference();
-    $paymentDatetime = date('Y-m-d H:i:s');
+    $paymentDateObject = DateTime::createFromFormat('Y-m-d', $paymentDate);
+    $paymentDateErrors = DateTime::getLastErrors();
+    if ($paymentDate === '' || $paymentDateObject === false || ($paymentDateErrors !== false && ((int) $paymentDateErrors['warning_count'] > 0 || (int) $paymentDateErrors['error_count'] > 0))) {
+        $errors['payment_date'] = 'Enter a valid payment date.';
+    } elseif ($paymentDate > date('Y-m-d')) {
+        $errors['payment_date'] = 'Payment date cannot be in the future.';
+    }
+
+    if (!$declarationA || !$declarationB) {
+        $errors['declaration'] = 'Please accept both declarations before submitting payment details.';
+    }
+
+    $receiptError = isset($_FILES['payment_receipt']) ? validatePaymentReceiptFile($_FILES['payment_receipt']) : 'Payment receipt upload is required.';
+    if ($receiptError !== null) {
+        $errors['payment_receipt'] = $receiptError;
+    }
+
+    if ($errors !== []) {
+        jsonResponse(['success' => false, 'message' => 'Validation failed.', 'errors' => $errors], 422);
+    }
+
+    $uploadDir = __DIR__ . '/../public/uploads/payment_receipts/' . $applicant['application_id'];
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+        jsonResponse(['success' => false, 'message' => 'Unable to create payment receipt upload directory.'], 500);
+    }
+
+    $extension = strtolower(pathinfo((string) ($_FILES['payment_receipt']['name'] ?? ''), PATHINFO_EXTENSION));
+    $receiptName = 'receipt_' . date('YmdHis') . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $target = $uploadDir . '/' . $receiptName;
+
+    if (!move_uploaded_file((string) $_FILES['payment_receipt']['tmp_name'], $target)) {
+        jsonResponse(['success' => false, 'message' => 'Unable to save payment receipt. Please retry.'], 500);
+    }
+
+    $receiptPath = 'uploads/payment_receipts/' . $applicant['application_id'] . '/' . $receiptName;
+    $paymentDatetime = $paymentDate . ' 00:00:00';
 
     $paymentStmt = $db->prepare(
         'UPDATE applicants
@@ -100,27 +200,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              payment_amount = :payment_amount,
              payment_datetime = :payment_datetime,
              transaction_reference = :transaction_reference,
+             payment_receipt_file = :payment_receipt_file,
              payment_demo_flag = :payment_demo_flag
          WHERE id = :id'
     );
     $paymentStmt->execute([
-        'payment_status' => 'paid',
-        'payment_mode' => 'demo',
+        'payment_status' => 'payment_submitted',
+        'payment_mode' => 'SBI Collect',
         'payment_amount' => $applicationFee,
         'payment_datetime' => $paymentDatetime,
-        'transaction_reference' => $transactionReference,
-        'payment_demo_flag' => 1,
+        'transaction_reference' => $transactionId,
+        'payment_receipt_file' => $receiptPath,
+        'payment_demo_flag' => 0,
         'id' => $applicant['id'],
     ]);
 
     jsonResponse([
         'success' => true,
-        'message' => 'Demo payment successful. Please complete final submission to receive the confirmation email.',
+        'message' => 'Payment details submitted successfully. The payment will be verified by the office before it is treated as paid.',
         'data' => [
-            'payment_status' => 'paid',
+            'payment_status' => 'payment_submitted',
             'payment_amount' => $applicationFee,
-            'payment_datetime' => $paymentDatetime,
-            'transaction_reference' => $transactionReference,
+            'payment_date' => $paymentDate,
+            'transaction_reference' => $transactionId,
+            'payment_receipt_file' => $receiptPath,
         ],
     ]);
 }
@@ -134,7 +237,9 @@ jsonResponse([
         'payment_mode' => $application['payment_mode'] ?? null,
         'payment_amount' => $application['payment_amount'] ?? null,
         'payment_datetime' => $application['payment_datetime'] ?? null,
+        'payment_date' => paymentDateForResponse($application['payment_datetime'] ?? null),
         'transaction_reference' => $application['transaction_reference'] ?? null,
+        'payment_receipt_file' => $application['payment_receipt_file'] ?? null,
         'payment_demo_flag' => $application['payment_demo_flag'] ?? 0,
         'payment_final_submitted_at' => $progress['payment_final_submitted_at'] ?? null,
         'payable_amount' => $applicationFee,
