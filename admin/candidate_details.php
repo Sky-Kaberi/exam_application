@@ -167,7 +167,7 @@ function resolveApplicationStatus(array $progress): string
     <?= renderField('Payment Mode', $applicant['payment_mode'] ?? '') ?>
     <?= renderField('Payment Amount', $applicant['payment_amount'] ?? '') ?>
     <?= renderField('Payment DateTime', $applicant['payment_datetime'] ?? '') ?>
-    <?= renderField('Transaction Reference', $applicant['transaction_reference'] ?? '') ?>
+    <?= renderField('SBI Collect Reference Number', $applicant['transaction_reference'] ?? '') ?>
     <div class="col-12 col-md-6 mb-2">
         <div class="border rounded p-2 h-100">
             <small class="text-muted d-block">Payment Receipt</small>

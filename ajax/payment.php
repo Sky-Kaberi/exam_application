@@ -49,7 +49,7 @@ $applicationFee = isset($courses['application_fee']) && (int) $courses['applicat
 function validatePaymentReceiptFile(array $file): ?string
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-        return 'Payment receipt upload is required.';
+        return 'SBI Collect Payment Receipt upload is required.';
     }
 
     if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
@@ -151,14 +151,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $declarationB = isset($payload['declaration_b']);
 
     if ($transactionId === '') {
-        $errors['transaction_id'] = 'Transaction ID is required.';
+        $errors['transaction_id'] = 'SBI Collect Reference Number is required.';
     } elseif (mb_strlen($transactionId) > 80) {
-        $errors['transaction_id'] = 'Transaction ID must be 80 characters or fewer.';
+        $errors['transaction_id'] = 'SBI Collect Reference Number must be 80 characters or fewer.';
     }
 
     $paymentDateObject = DateTime::createFromFormat('Y-m-d', $paymentDate);
     $paymentDateErrors = DateTime::getLastErrors();
-    if ($paymentDate === '' || $paymentDateObject === false || ($paymentDateErrors !== false && ((int) $paymentDateErrors['warning_count'] > 0 || (int) $paymentDateErrors['error_count'] > 0))) {
+    if ($paymentDate === '') {
+        $errors['payment_date'] = 'Payment Date is required.';
+    } elseif ($paymentDateObject === false || ($paymentDateErrors !== false && ((int) $paymentDateErrors['warning_count'] > 0 || (int) $paymentDateErrors['error_count'] > 0))) {
         $errors['payment_date'] = 'Enter a valid payment date.';
     } elseif ($paymentDate > date('Y-m-d')) {
         $errors['payment_date'] = 'Payment date cannot be in the future.';
@@ -168,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['declaration'] = 'Please accept both declarations before submitting payment details.';
     }
 
-    $receiptError = isset($_FILES['payment_receipt']) ? validatePaymentReceiptFile($_FILES['payment_receipt']) : 'Payment receipt upload is required.';
+    $receiptError = isset($_FILES['payment_receipt']) ? validatePaymentReceiptFile($_FILES['payment_receipt']) : 'SBI Collect Payment Receipt upload is required.';
     if ($receiptError !== null) {
         $errors['payment_receipt'] = $receiptError;
     }

@@ -578,7 +578,7 @@ async function loadConfirmation() {
             ${kvGrid([
                 ['Payment Status', d.step1?.payment_status],
                 ['Payment Mode', d.step1?.payment_mode],
-                ['Transaction Reference', d.step1?.transaction_reference],
+                ['SBI Collect Reference Number', d.step1?.transaction_reference],
                 ['Payment Date & Time', d.step1?.payment_datetime],
                 ['Amount Paid', formatFee(d.step1?.payment_amount)],
                 ['Acknowledgement Generated On', d.confirmation_datetime]
