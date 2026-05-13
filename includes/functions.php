@@ -420,12 +420,7 @@ function isApplicationProcessCompleted(PDO $db, int $applicantId): bool
     $paymentStatusStmt->execute(['id' => $applicantId]);
     $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted');
 
-    if ($paymentStatus !== 'paid') {
-        return false;
-    }
-
-    $progress = getApplicantProgress($db, $applicantId);
-    return $progress['payment_final_submitted_at'] !== null;
+    return $paymentStatus === 'paid';
 }
 
 function isApplicantFinalSubmitted(PDO $db, int $applicantId): bool

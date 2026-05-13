@@ -14,6 +14,13 @@ if ($progress['final_submitted_at'] === null) {
     exit;
 }
 
+$paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
+$paymentStatusStmt->execute(['id' => $applicant['id']]);
+if ((string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted') === 'paid') {
+    header('Location: step5_confirmation.php');
+    exit;
+}
+
 $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
 ?><!DOCTYPE html>
 <html lang="en">
@@ -60,7 +67,7 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
     </div>
     <div class="body">
         <div class="box" id="paymentInfo"></div>
-        <div class="instructions">
+        <div class="instructions" id="paymentInstructions">
             <a href="<?= htmlspecialchars($sbiCollectUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">Click here to make the payment using SBI Collect</a>
             <p><strong>After making payment, fill the form below and submit.</strong></p>
         </div>
@@ -98,7 +105,6 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
             <div class="actions">
                 <a href="step3_preview.php" class="secondary">Back to Preview</a>
                 <button type="submit" id="submitPaymentBtn">Submit Payment Details</button>
-                <button type="button" id="finalSubmitAfterPaymentBtn" style="display:none;">Final Submission</button>
             </div>
         </form>
         <div class="status" id="paymentStatus"></div>
@@ -108,8 +114,8 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
 const paymentInfo = document.getElementById('paymentInfo');
 const paymentStatus = document.getElementById('paymentStatus');
 const paymentConfirmationForm = document.getElementById('paymentConfirmationForm');
+const paymentInstructions = document.getElementById('paymentInstructions');
 const submitPaymentBtn = document.getElementById('submitPaymentBtn');
-const finalSubmitAfterPaymentBtn = document.getElementById('finalSubmitAfterPaymentBtn');
 const declarationA = document.getElementById('declarationA');
 const declarationB = document.getElementById('declarationB');
 let isPaymentAlreadyDone = false;
@@ -119,6 +125,9 @@ function escapeHtml(v) {
   return String(value(v)).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[ch]));
 }
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
+function hasSubmittedSbiDetails(data) {
+  return Boolean(data.transaction_reference || data.payment_date || data.payment_receipt_file || data.payment_submitted_at);
+}
 function areDeclarationsAccepted() { return declarationA.checked && declarationB.checked; }
 
 function clearErrors() {
@@ -187,12 +196,18 @@ function render(data) {
   `;
 
   isPaymentAlreadyDone = data.payment_status === 'paid';
-  const paymentSubmitted = data.payment_status === 'pending_verification';
-  const paymentRejected = data.payment_status === 'rejected';
-  const finalSubmitted = !!data.payment_final_submitted_at;
-  submitPaymentBtn.disabled = isPaymentAlreadyDone;
-  submitPaymentBtn.style.display = isPaymentAlreadyDone ? 'none' : 'inline-block';
-  finalSubmitAfterPaymentBtn.style.display = isPaymentAlreadyDone && !finalSubmitted ? 'inline-block' : 'none';
+  const detailsSubmitted = hasSubmittedSbiDetails(data);
+
+  if (isPaymentAlreadyDone) {
+    paymentStatus.textContent = 'Payment verified. Redirecting to confirmation page...';
+    paymentStatus.style.color = '#0a7a35';
+    window.location.href = 'step5_confirmation.php';
+    return;
+  }
+
+  paymentConfirmationForm.style.display = detailsSubmitted ? 'none' : 'block';
+  paymentInstructions.style.display = detailsSubmitted ? 'none' : 'block';
+  submitPaymentBtn.disabled = detailsSubmitted;
 
   if (data.transaction_reference) {
     paymentConfirmationForm.elements.transaction_id.value = data.transaction_reference;
@@ -201,29 +216,12 @@ function render(data) {
     paymentConfirmationForm.elements.payment_date.value = data.payment_date;
   }
 
-  if (isPaymentAlreadyDone) {
-    syncCheckboxState(declarationA, true, true);
-    syncCheckboxState(declarationB, true, true);
-  } else {
-    syncCheckboxState(declarationA, false, false);
-    syncCheckboxState(declarationB, false, false);
-  }
+  syncCheckboxState(declarationA, false, false);
+  syncCheckboxState(declarationB, false, false);
 
-  if (paymentSubmitted && !isPaymentAlreadyDone) {
-    paymentStatus.textContent = 'Payment details submitted successfully. Your payment will be verified by admin.';
-    paymentStatus.style.color = '#0a7a35';
-  }
-
-  if (paymentRejected) {
-    const note = data.payment_admin_note ? ` Admin note: ${data.payment_admin_note}` : '';
-    paymentStatus.textContent = `Payment submission was rejected. Please submit corrected SBI Collect details.${note}`;
-    paymentStatus.style.color = '#b42318';
-  }
-
-  if (finalSubmitted && isPaymentAlreadyDone) {
-    paymentStatus.textContent = 'Final submission already completed. Redirecting to confirmation page...';
-    paymentStatus.style.color = '#0a7a35';
-    window.location.href = 'step5_confirmation.php';
+  if (detailsSubmitted) {
+    paymentStatus.textContent = 'Once your payment is verified you will be able to view & download the confirmation receipt.';
+    paymentStatus.style.color = '#163c70';
   }
 }
 
@@ -280,28 +278,6 @@ paymentConfirmationForm.addEventListener('submit', async (event) => {
   await loadPaymentDetails();
 });
 
-finalSubmitAfterPaymentBtn.addEventListener('click', async () => {
-  finalSubmitAfterPaymentBtn.disabled = true;
-  paymentStatus.textContent = '';
-
-  const response = await fetch('../ajax/payment.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'final_submit' })
-  });
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    paymentStatus.textContent = data.message || 'Final submission failed.';
-    paymentStatus.style.color = '#b42318';
-    finalSubmitAfterPaymentBtn.disabled = false;
-    return;
-  }
-
-  paymentStatus.textContent = data.message || 'Final submission successful. Redirecting to confirmation page...';
-  paymentStatus.style.color = '#0a7a35';
-  window.location.href = 'step5_confirmation.php';
-});
 
 loadPaymentDetails().catch(() => null);
 </script>

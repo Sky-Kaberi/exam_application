@@ -13,8 +13,6 @@ $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE i
 $paymentStatusStmt->execute(['id' => $applicant['id']]);
 $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted');
 
-$progress = getApplicantProgress($db, (int) $applicant['id']);
-
 // New payment-verification gate: direct URL access is blocked until an admin marks payment as paid.
 if ($paymentStatus !== 'paid') {
     ?>
@@ -34,7 +32,7 @@ if ($paymentStatus !== 'paid') {
     <body>
         <div class="card">
             <h1>Confirmation Receipt Pending</h1>
-            <div class="alert">Your payment is pending verification. Confirmation receipt will be available after admin approval.</div>
+            <div class="alert">Once your payment is verified you will be able to view & download the confirmation receipt.</div>
             <a href="step4_fee_payment.php">Back to Fee Payment</a>
         </div>
     </body>
@@ -43,10 +41,6 @@ if ($paymentStatus !== 'paid') {
     exit;
 }
 
-if ($progress['payment_final_submitted_at'] === null) {
-    header('Location: step4_fee_payment.php');
-    exit;
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
