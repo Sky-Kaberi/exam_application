@@ -11,10 +11,39 @@ $db = getDb();
 
 $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
 $paymentStatusStmt->execute(['id' => $applicant['id']]);
-$paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'unpaid');
+$paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted');
 
 $progress = getApplicantProgress($db, (int) $applicant['id']);
-if ($paymentStatus !== 'paid' || $progress['payment_final_submitted_at'] === null) {
+
+// New payment-verification gate: direct URL access is blocked until an admin marks payment as paid.
+if ($paymentStatus !== 'paid') {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Confirmation Pending</title>
+        <style>
+            body { font-family: Arial, sans-serif; background:#eef2f7; margin:0; padding:24px; color:#1f2937; }
+            .card { max-width:720px; margin:50px auto; background:#fff; border-radius:12px; padding:24px; box-shadow:0 10px 24px rgba(0,0,0,.08); }
+            .alert { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:14px; margin:12px 0 18px; }
+            a { display:inline-block; padding:10px 14px; border-radius:8px; background:#184d9b; color:#fff; text-decoration:none; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>Confirmation Receipt Pending</h1>
+            <div class="alert">Your payment is pending verification. Confirmation receipt will be available after admin approval.</div>
+            <a href="step4_fee_payment.php">Back to Fee Payment</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+if ($progress['payment_final_submitted_at'] === null) {
     header('Location: step4_fee_payment.php');
     exit;
 }

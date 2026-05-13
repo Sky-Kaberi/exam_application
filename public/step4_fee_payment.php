@@ -137,6 +137,7 @@ function validateMandatoryPaymentFields() {
   const transactionReference = paymentConfirmationForm.elements.transaction_id.value.trim();
   const paymentDate = paymentConfirmationForm.elements.payment_date.value.trim();
   const paymentReceipt = paymentConfirmationForm.elements.payment_receipt;
+  const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
 
   if (!transactionReference) {
     errors.transaction_id = 'SBI Collect Reference Number is required.';
@@ -146,6 +147,12 @@ function validateMandatoryPaymentFields() {
   }
   if (!paymentReceipt.files || paymentReceipt.files.length === 0) {
     errors.payment_receipt = 'SBI Collect Payment Receipt upload is required.';
+  } else {
+    const fileName = paymentReceipt.files[0].name || '';
+    const extension = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+    if (!allowedExtensions.includes(extension)) {
+      errors.payment_receipt = 'Payment receipt must be a PDF, JPG, JPEG, or PNG file.';
+    }
   }
 
   showErrors(errors);
@@ -180,7 +187,8 @@ function render(data) {
   `;
 
   isPaymentAlreadyDone = data.payment_status === 'paid';
-  const paymentSubmitted = data.payment_status === 'payment_submitted';
+  const paymentSubmitted = data.payment_status === 'pending_verification';
+  const paymentRejected = data.payment_status === 'rejected';
   const finalSubmitted = !!data.payment_final_submitted_at;
   submitPaymentBtn.disabled = isPaymentAlreadyDone;
   submitPaymentBtn.style.display = isPaymentAlreadyDone ? 'none' : 'inline-block';
@@ -202,11 +210,17 @@ function render(data) {
   }
 
   if (paymentSubmitted && !isPaymentAlreadyDone) {
-    paymentStatus.textContent = 'Payment details submitted successfully. The payment will be verified by the office before it is treated as paid.';
+    paymentStatus.textContent = 'Payment details submitted successfully. Your payment will be verified by admin.';
     paymentStatus.style.color = '#0a7a35';
   }
 
-  if (finalSubmitted) {
+  if (paymentRejected) {
+    const note = data.payment_admin_note ? ` Admin note: ${data.payment_admin_note}` : '';
+    paymentStatus.textContent = `Payment submission was rejected. Please submit corrected SBI Collect details.${note}`;
+    paymentStatus.style.color = '#b42318';
+  }
+
+  if (finalSubmitted && isPaymentAlreadyDone) {
     paymentStatus.textContent = 'Final submission already completed. Redirecting to confirmation page...';
     paymentStatus.style.color = '#0a7a35';
     window.location.href = 'step5_confirmation.php';

@@ -26,13 +26,16 @@ if ($progress['final_submitted_at'] === null) {
 }
 
 $applicationStmt = $db->prepare(
-    'SELECT application_id, candidate_name, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_receipt_file, payment_demo_flag
+    'SELECT application_id, candidate_name, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_receipt_file, payment_demo_flag, sbi_receipt_path, sbi_reference_no, sbi_payment_date, payment_submitted_at, payment_verified_at, payment_verified_by, payment_admin_note
      FROM applicants
      WHERE id = :id
      LIMIT 1'
 );
 $applicationStmt->execute(['id' => $applicant['id']]);
 $application = $applicationStmt->fetch();
+if (!is_array($application)) {
+    jsonResponse(['success' => false, 'message' => 'Application not found.'], 404);
+}
 
 $coursesStmt = $db->prepare('SELECT course_group_1, course_group_2, application_fee FROM applicant_step2_courses WHERE applicant_id = :id LIMIT 1');
 $coursesStmt->execute(['id' => $applicant['id']]);
@@ -91,8 +94,12 @@ function validatePaymentReceiptFile(array $file): ?string
     return null;
 }
 
-function paymentDateForResponse(?string $paymentDatetime): ?string
+function paymentDateForResponse(?string $paymentDate, ?string $paymentDatetime): ?string
 {
+    if ($paymentDate !== null && trim($paymentDate) !== '') {
+        return substr($paymentDate, 0, 10);
+    }
+
     if ($paymentDatetime === null || trim($paymentDatetime) === '') {
         return null;
     }
@@ -111,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string) ($payload['action'] ?? 'submit_payment');
 
     if ($action === 'final_submit') {
-        if ((string) ($application['payment_status'] ?? 'unpaid') !== 'paid') {
+        if ((string) ($application['payment_status'] ?? 'not_submitted') !== 'paid') {
             jsonResponse(['success' => false, 'message' => 'Payment must be verified as paid before final submission.'], 422);
         }
 
@@ -136,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         jsonResponse(['success' => false, 'message' => 'Invalid payment action.'], 400);
     }
 
-    if ((string) ($application['payment_status'] ?? 'unpaid') === 'paid') {
+    if ((string) ($application['payment_status'] ?? 'not_submitted') === 'paid') {
         jsonResponse([
             'success' => true,
             'message' => 'Payment is already verified as paid. Please complete final submission.',
@@ -179,22 +186,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         jsonResponse(['success' => false, 'message' => 'Validation failed.', 'errors' => $errors], 422);
     }
 
-    $uploadDir = __DIR__ . '/../public/uploads/payment_receipts/' . $applicant['application_id'];
+    $safeApplicationId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $applicant['application_id']);
+    $uploadDir = __DIR__ . '/../public/uploads/payment_receipts/' . $safeApplicationId;
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
         jsonResponse(['success' => false, 'message' => 'Unable to create payment receipt upload directory.'], 500);
     }
 
     $extension = strtolower(pathinfo((string) ($_FILES['payment_receipt']['name'] ?? ''), PATHINFO_EXTENSION));
-    $receiptName = 'receipt_' . date('YmdHis') . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $receiptName = $safeApplicationId . '_' . (int) $applicant['id'] . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
     $target = $uploadDir . '/' . $receiptName;
 
     if (!move_uploaded_file((string) $_FILES['payment_receipt']['tmp_name'], $target)) {
         jsonResponse(['success' => false, 'message' => 'Unable to save payment receipt. Please retry.'], 500);
     }
 
-    $receiptPath = 'uploads/payment_receipts/' . $applicant['application_id'] . '/' . $receiptName;
+    $receiptPath = 'uploads/payment_receipts/' . $safeApplicationId . '/' . $receiptName;
     $paymentDatetime = $paymentDate . ' 00:00:00';
 
+    // Candidate submissions only move to pending_verification; only admins can mark records paid.
     $paymentStmt = $db->prepare(
         'UPDATE applicants
          SET payment_status = :payment_status,
@@ -203,29 +212,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              payment_datetime = :payment_datetime,
              transaction_reference = :transaction_reference,
              payment_receipt_file = :payment_receipt_file,
+             sbi_receipt_path = :sbi_receipt_path,
+             sbi_reference_no = :sbi_reference_no,
+             sbi_payment_date = :sbi_payment_date,
+             payment_submitted_at = NOW(),
+             payment_verified_at = NULL,
+             payment_verified_by = NULL,
+             payment_admin_note = NULL,
              payment_demo_flag = :payment_demo_flag
          WHERE id = :id'
     );
     $paymentStmt->execute([
-        'payment_status' => 'payment_submitted',
+        'payment_status' => 'pending_verification',
         'payment_mode' => 'SBI Collect',
         'payment_amount' => $applicationFee,
         'payment_datetime' => $paymentDatetime,
         'transaction_reference' => $transactionId,
         'payment_receipt_file' => $receiptPath,
+        'sbi_receipt_path' => $receiptPath,
+        'sbi_reference_no' => $transactionId,
+        'sbi_payment_date' => $paymentDate,
         'payment_demo_flag' => 0,
         'id' => $applicant['id'],
     ]);
 
     jsonResponse([
         'success' => true,
-        'message' => 'Payment details submitted successfully. The payment will be verified by the office before it is treated as paid.',
+        'message' => 'Payment details submitted successfully. Your payment will be verified by admin.',
         'data' => [
-            'payment_status' => 'payment_submitted',
+            'payment_status' => 'pending_verification',
             'payment_amount' => $applicationFee,
             'payment_date' => $paymentDate,
             'transaction_reference' => $transactionId,
+            'sbi_reference_no' => $transactionId,
             'payment_receipt_file' => $receiptPath,
+            'sbi_receipt_path' => $receiptPath,
         ],
     ]);
 }
@@ -235,13 +256,18 @@ jsonResponse([
     'data' => [
         'application_id' => $application['application_id'] ?? '',
         'candidate_name' => $application['candidate_name'] ?? '',
-        'payment_status' => $application['payment_status'] ?? 'unpaid',
+        'payment_status' => $application['payment_status'] ?? 'not_submitted',
         'payment_mode' => $application['payment_mode'] ?? null,
         'payment_amount' => $application['payment_amount'] ?? null,
         'payment_datetime' => $application['payment_datetime'] ?? null,
-        'payment_date' => paymentDateForResponse($application['payment_datetime'] ?? null),
-        'transaction_reference' => $application['transaction_reference'] ?? null,
-        'payment_receipt_file' => $application['payment_receipt_file'] ?? null,
+        'payment_date' => paymentDateForResponse($application['sbi_payment_date'] ?? null, $application['payment_datetime'] ?? null),
+        'transaction_reference' => $application['sbi_reference_no'] ?? $application['transaction_reference'] ?? null,
+        'payment_receipt_file' => $application['sbi_receipt_path'] ?? $application['payment_receipt_file'] ?? null,
+        'sbi_reference_no' => $application['sbi_reference_no'] ?? null,
+        'sbi_receipt_path' => $application['sbi_receipt_path'] ?? null,
+        'payment_submitted_at' => $application['payment_submitted_at'] ?? null,
+        'payment_verified_at' => $application['payment_verified_at'] ?? null,
+        'payment_admin_note' => $application['payment_admin_note'] ?? null,
         'payment_demo_flag' => $application['payment_demo_flag'] ?? 0,
         'payment_final_submitted_at' => $progress['payment_final_submitted_at'] ?? null,
         'payable_amount' => $applicationFee,

@@ -11,13 +11,17 @@ bootstrapJsonErrorHandling();
 $applicant = requireApplicantLoginForJson();
 $db = getDb();
 
-$step1Stmt = $db->prepare('SELECT application_id, candidate_name, father_name, mother_name, date_of_birth, gender, identification_type, identification_no, mobile_no, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, payment_demo_flag FROM applicants WHERE id = :id LIMIT 1');
+$step1Stmt = $db->prepare('SELECT application_id, candidate_name, father_name, mother_name, date_of_birth, gender, identification_type, identification_no, mobile_no, email_id, payment_status, payment_mode, payment_amount, payment_datetime, transaction_reference, sbi_reference_no, sbi_payment_date, payment_verified_at, payment_demo_flag FROM applicants WHERE id = :id LIMIT 1');
 $step1Stmt->execute(['id' => $applicant['id']]);
 $step1 = $step1Stmt->fetch();
 
-if (!is_array($step1) || (string) ($step1['payment_status'] ?? 'unpaid') !== 'paid') {
-    jsonResponse(['success' => false, 'message' => 'Payment pending. Confirmation is available only after successful payment.'], 403);
+if (!is_array($step1) || (string) ($step1['payment_status'] ?? 'not_submitted') !== 'paid') {
+    jsonResponse(['success' => false, 'message' => 'Your payment is pending verification. Confirmation receipt will be available after admin approval.'], 403);
 }
+
+// Prefer the verified SBI Collect fields on the receipt, while keeping legacy keys for existing templates.
+$step1['transaction_reference'] = $step1['sbi_reference_no'] ?: $step1['transaction_reference'];
+$step1['payment_datetime'] = $step1['sbi_payment_date'] ?: $step1['payment_datetime'];
 
 $progress = getApplicantProgress($db, (int) $applicant['id']);
 if ($progress['payment_final_submitted_at'] === null) {
