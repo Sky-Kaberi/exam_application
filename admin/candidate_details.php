@@ -168,6 +168,17 @@ function resolveApplicationStatus(array $progress): string
     <?= renderField('Payment Amount', $applicant['payment_amount'] ?? '') ?>
     <?= renderField('Payment DateTime', $applicant['payment_datetime'] ?? '') ?>
     <?= renderField('Transaction Reference', $applicant['transaction_reference'] ?? '') ?>
+    <div class="col-12 col-md-6 mb-2">
+        <div class="border rounded p-2 h-100">
+            <small class="text-muted d-block">Payment Receipt</small>
+            <?php if (!empty($applicant['payment_receipt_file'])): ?>
+                <a href="../public/<?= htmlspecialchars((string) $applicant['payment_receipt_file'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">View uploaded receipt</a>
+                <div><small><?= htmlspecialchars((string) $applicant['payment_receipt_file'], ENT_QUOTES, 'UTF-8') ?></small></div>
+            <?php else: ?>
+                <strong>-</strong>
+            <?php endif; ?>
+        </div>
+    </div>
     <?= renderField('Final Submitted At', $progress['final_submitted_at'] ?? '') ?>
     <?= renderField('Payment Final Submitted At', $progress['payment_final_submitted_at'] ?? '') ?>
     <?= sectionEnd() ?>
