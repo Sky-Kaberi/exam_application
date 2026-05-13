@@ -16,17 +16,13 @@ $step1Stmt->execute(['id' => $applicant['id']]);
 $step1 = $step1Stmt->fetch();
 
 if (!is_array($step1) || (string) ($step1['payment_status'] ?? 'not_submitted') !== 'paid') {
-    jsonResponse(['success' => false, 'message' => 'Your payment is pending verification. Confirmation receipt will be available after admin approval.'], 403);
+    jsonResponse(['success' => false, 'message' => 'Once your payment is verified you will be able to view & download the confirmation receipt.'], 403);
 }
 
 // Prefer the verified SBI Collect fields on the receipt, while keeping legacy keys for existing templates.
 $step1['transaction_reference'] = $step1['sbi_reference_no'] ?: $step1['transaction_reference'];
 $step1['payment_datetime'] = $step1['sbi_payment_date'] ?: $step1['payment_datetime'];
 
-$progress = getApplicantProgress($db, (int) $applicant['id']);
-if ($progress['payment_final_submitted_at'] === null) {
-    jsonResponse(['success' => false, 'message' => 'Please complete final submission after payment to view confirmation.'], 403);
-}
 
 $basicStmt = $db->prepare('SELECT nationality, domicile, religion, category, sub_category_details, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :id LIMIT 1');
 $basicStmt->execute(['id' => $applicant['id']]);

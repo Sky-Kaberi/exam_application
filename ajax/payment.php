@@ -146,8 +146,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ((string) ($application['payment_status'] ?? 'not_submitted') === 'paid') {
         jsonResponse([
             'success' => true,
-            'message' => 'Payment is already verified as paid. Please complete final submission.',
+            'message' => 'Payment is already verified as paid. Redirecting to confirmation page.',
             'data' => ['payment_status' => 'paid'],
+        ]);
+    }
+
+    $hasSubmittedSbiDetails = trim((string) ($application['sbi_reference_no'] ?? $application['transaction_reference'] ?? '')) !== ''
+        || trim((string) ($application['sbi_payment_date'] ?? $application['payment_datetime'] ?? '')) !== ''
+        || trim((string) ($application['sbi_receipt_path'] ?? $application['payment_receipt_file'] ?? '')) !== ''
+        || trim((string) ($application['payment_submitted_at'] ?? '')) !== '';
+    if ($hasSubmittedSbiDetails) {
+        jsonResponse([
+            'success' => true,
+            'message' => 'Once your payment is verified you will be able to view & download the confirmation receipt.',
+            'data' => [
+                'payment_status' => $application['payment_status'] ?? 'pending_verification',
+                'payment_amount' => $application['payment_amount'] ?? $applicationFee,
+                'payment_date' => paymentDateForResponse($application['sbi_payment_date'] ?? null, $application['payment_datetime'] ?? null),
+                'transaction_reference' => $application['sbi_reference_no'] ?? $application['transaction_reference'] ?? null,
+                'payment_receipt_file' => $application['sbi_receipt_path'] ?? $application['payment_receipt_file'] ?? null,
+                'sbi_receipt_path' => $application['sbi_receipt_path'] ?? null,
+            ],
         ]);
     }
 
