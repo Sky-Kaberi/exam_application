@@ -291,7 +291,9 @@ unset($queryWithoutPage['page']);
                     $paginationItems = [1, $page - 2, $page - 1, $page, $page + 1, $page + 2, $totalPages];
                     $paginationItems = array_values(array_unique(array_filter(
                         $paginationItems,
-                        static fn (int $item): bool => $item >= 1 && $item <= $totalPages
+                        static function (int $item) use ($totalPages): bool {
+                            return $item >= 1 && $item <= $totalPages;
+                        }
                     )));
                     sort($paginationItems);
                     $previousItem = null;
