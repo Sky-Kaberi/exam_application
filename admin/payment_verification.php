@@ -88,6 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$allowedPageSizes = [10, 25, 50, 100];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$pageSize = (int) ($_GET['page_size'] ?? 25);
+if (!in_array($pageSize, $allowedPageSizes, true)) {
+    $pageSize = 25;
+}
+
 $statusFilter = trim((string) ($_GET['status'] ?? 'pending_verification'));
 if (!in_array($statusFilter, ['all', 'not_submitted', 'pending_verification', 'paid', 'rejected'], true)) {
     $statusFilter = 'pending_verification';
@@ -101,6 +108,17 @@ if ($statusFilter !== 'all') {
 }
 $whereSql = $conditions !== [] ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
+$countStmt = $db->prepare("SELECT COUNT(*) FROM applicants a {$whereSql}");
+$countStmt->execute($params);
+$totalRecords = (int) $countStmt->fetchColumn();
+$totalPages = max(1, (int) ceil($totalRecords / $pageSize));
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+$offset = ($page - 1) * $pageSize;
+$firstRecordNumber = $totalRecords > 0 ? $offset + 1 : 0;
+$lastRecordNumber = min($offset + $pageSize, $totalRecords);
+
 $listStmt = $db->prepare(
     "SELECT a.id, a.application_id, a.candidate_name, a.mobile_no, a.email_id,
             a.payment_status, a.payment_amount, a.sbi_reference_no, a.sbi_payment_date,
@@ -113,9 +131,14 @@ $listStmt = $db->prepare(
      ORDER BY CASE WHEN a.payment_status = 'pending_verification' THEN 0 ELSE 1 END,
               a.payment_submitted_at DESC,
               a.created_at DESC
-     LIMIT 200"
+     LIMIT :limit OFFSET :offset"
 );
-$listStmt->execute($params);
+foreach ($params as $key => $value) {
+    $listStmt->bindValue(':' . $key, $value);
+}
+$listStmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
+$listStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$listStmt->execute();
 $payments = $listStmt->fetchAll();
 $hasActionablePayments = false;
 foreach ($payments as $payment) {
@@ -124,6 +147,9 @@ foreach ($payments as $payment) {
         break;
     }
 }
+
+$queryWithoutPage = $_GET;
+unset($queryWithoutPage['page']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -166,8 +192,25 @@ foreach ($payments as $payment) {
                         <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>All</option>
                     </select>
                 </div>
+                <div class="col-12 col-md-2">
+                    <label for="page_size" class="form-label">Records Per Page</label>
+                    <select id="page_size" name="page_size" class="form-select">
+                        <?php foreach ($allowedPageSizes as $size): ?>
+                            <option value="<?= $size ?>" <?= $pageSize === $size ? 'selected' : '' ?>><?= $size ?> / page</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="col-12 col-md-2 d-grid"><button class="btn btn-primary" type="submit">Filter</button></div>
+                <div class="col-12 col-md-2 d-grid"><a class="btn btn-outline-secondary" href="payment_verification.php">Reset Filters</a></div>
             </form>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+        <h2 class="h5 mb-0">Payments</h2>
+        <div class="text-muted">
+            Showing <strong><?= number_format($firstRecordNumber) ?></strong>-<strong><?= number_format($lastRecordNumber) ?></strong>
+            of <strong><?= number_format($totalRecords) ?></strong> matching records
         </div>
     </div>
 
@@ -236,6 +279,51 @@ foreach ($payments as $payment) {
                 <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+
+        <div class="card-footer bg-white d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+            <div class="small text-muted">
+                Page <?= number_format($page) ?> of <?= number_format($totalPages) ?>
+            </div>
+            <nav aria-label="Payment verification pagination">
+                <ul class="pagination mb-0 flex-wrap justify-content-end">
+                    <?php
+                    $paginationItems = [1, $page - 2, $page - 1, $page, $page + 1, $page + 2, $totalPages];
+                    $paginationItems = array_values(array_unique(array_filter(
+                        $paginationItems,
+                        static fn (int $item): bool => $item >= 1 && $item <= $totalPages
+                    )));
+                    sort($paginationItems);
+                    $previousItem = null;
+                    ?>
+                    <?php
+                    $previousQuery = $queryWithoutPage;
+                    $previousQuery['page'] = max(1, $page - 1);
+                    $nextQuery = $queryWithoutPage;
+                    $nextQuery['page'] = min($totalPages, $page + 1);
+                    ?>
+                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="<?= htmlspecialchars('payment_verification.php?' . http_build_query($previousQuery), ENT_QUOTES, 'UTF-8') ?>" tabindex="<?= $page <= 1 ? '-1' : '0' ?>">Previous</a>
+                    </li>
+                    <?php foreach ($paginationItems as $paginationItem): ?>
+                        <?php if ($previousItem !== null && $paginationItem > $previousItem + 1): ?>
+                            <li class="page-item disabled" aria-hidden="true"><span class="page-link">&hellip;</span></li>
+                        <?php endif; ?>
+                        <?php
+                        $query = $queryWithoutPage;
+                        $query['page'] = $paginationItem;
+                        $url = 'payment_verification.php?' . http_build_query($query);
+                        ?>
+                        <li class="page-item <?= $paginationItem === $page ? 'active' : '' ?>" <?= $paginationItem === $page ? 'aria-current="page"' : '' ?>>
+                            <a class="page-link" href="<?= htmlspecialchars($url, ENT_QUOTES, 'UTF-8') ?>"><?= $paginationItem ?></a>
+                        </li>
+                        <?php $previousItem = $paginationItem; ?>
+                    <?php endforeach; ?>
+                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                        <a class="page-link" href="<?= htmlspecialchars('payment_verification.php?' . http_build_query($nextQuery), ENT_QUOTES, 'UTF-8') ?>" tabindex="<?= $page >= $totalPages ? '-1' : '0' ?>">Next</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
