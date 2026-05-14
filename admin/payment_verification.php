@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($currentStatus === false) {
             $errors[] = 'Candidate payment record not found.';
-        } elseif (!in_array((string) $currentStatus, ['pending_verification', 'rejected', 'paid'], true)) {
-            $errors[] = 'Payment details have not been submitted by the candidate yet.';
+        } elseif ((string) $currentStatus !== 'pending_verification') {
+            $errors[] = 'Only pending payment submissions can be accepted or rejected.';
         } elseif ($action === 'mark_paid') {
             // Admin verification is the only place where candidate payments become paid.
             $updateStmt = $db->prepare(
@@ -117,6 +117,13 @@ $listStmt = $db->prepare(
 );
 $listStmt->execute($params);
 $payments = $listStmt->fetchAll();
+$hasActionablePayments = false;
+foreach ($payments as $payment) {
+    if ((string) $payment['payment_status'] === 'pending_verification') {
+        $hasActionablePayments = true;
+        break;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -175,12 +182,14 @@ $payments = $listStmt->fetchAll();
                     <th>Receipt</th>
                     <th>Status</th>
                     <th>Admin Note</th>
-                    <th>Action</th>
+                    <?php if ($hasActionablePayments): ?>
+                        <th>Action</th>
+                    <?php endif; ?>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if ($payments === []): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No payment records found.</td></tr>
+                    <tr><td colspan="<?= $hasActionablePayments ? 7 : 6 ?>" class="text-center text-muted py-4">No payment records found.</td></tr>
                 <?php else: ?>
                     <?php foreach ($payments as $payment): ?>
                         <tr>
@@ -208,16 +217,20 @@ $payments = $listStmt->fetchAll();
                                 <?php endif; ?>
                             </td>
                             <td><?= nl2br(htmlspecialchars((string) ($payment['payment_admin_note'] ?: '-'), ENT_QUOTES, 'UTF-8')) ?></td>
-                            <td style="min-width: 280px;">
-                                <form method="post" class="mb-2">
-                                    <input type="hidden" name="applicant_id" value="<?= (int) $payment['id'] ?>">
-                                    <textarea class="form-control form-control-sm mb-2" name="payment_admin_note" rows="2" placeholder="Admin note / rejection reason"><?= htmlspecialchars((string) ($payment['payment_admin_note'] ?: ''), ENT_QUOTES, 'UTF-8') ?></textarea>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-success" type="submit" name="action" value="mark_paid">Mark as Paid</button>
-                                        <button class="btn btn-sm btn-danger" type="submit" name="action" value="reject">Reject</button>
-                                    </div>
-                                </form>
-                            </td>
+                            <?php if ($hasActionablePayments): ?>
+                                <td style="min-width: 280px;">
+                                    <?php if ((string) $payment['payment_status'] === 'pending_verification'): ?>
+                                        <form method="post" class="mb-2">
+                                            <input type="hidden" name="applicant_id" value="<?= (int) $payment['id'] ?>">
+                                            <textarea class="form-control form-control-sm mb-2" name="payment_admin_note" rows="2" placeholder="Admin note / rejection reason"><?= htmlspecialchars((string) ($payment['payment_admin_note'] ?: ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-success" type="submit" name="action" value="mark_paid">Accept</button>
+                                                <button class="btn btn-sm btn-danger" type="submit" name="action" value="reject">Reject</button>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
