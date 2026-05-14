@@ -438,7 +438,7 @@ function resolveApplicantPostLoginRedirect(PDO $db, int $applicantId): string
     $paymentStatusStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
     $paymentStatusStmt->execute(['id' => $applicantId]);
     $paymentStatus = (string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted');
-    if (in_array($paymentStatus, ['rejected', 'failed'], true)) {
+    if ($paymentStatus === 'rejected') {
         return '../public/step4_fee_payment.php';
     }
 

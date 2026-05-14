@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS applicants (
     registrant_ip_address VARCHAR(45) NULL,
     email_verified_at DATETIME NULL,
     mobile_verified_at DATETIME NULL,
-    payment_status ENUM('not_submitted', 'pending_verification', 'paid', 'rejected', 'failed') NOT NULL DEFAULT 'not_submitted',
+    payment_status ENUM('not_submitted', 'pending_verification', 'paid', 'rejected') NOT NULL DEFAULT 'not_submitted',
     payment_mode VARCHAR(30) NULL,
     payment_amount INT UNSIGNED NULL,
     payment_datetime DATETIME NULL,

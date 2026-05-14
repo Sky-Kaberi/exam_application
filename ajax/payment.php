@@ -49,7 +49,7 @@ $applicationFee = isset($courses['application_fee']) && (int) $courses['applicat
     ? (int) $courses['application_fee']
     : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
 $paymentStatus = (string) ($application['payment_status'] ?? 'not_submitted');
-$editablePaymentStatuses = ['not_submitted', 'rejected', 'failed'];
+$editablePaymentStatuses = ['not_submitted', 'rejected'];
 
 
 function validatePaymentReceiptFile(array $file): ?string
