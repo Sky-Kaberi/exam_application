@@ -53,6 +53,10 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
         input { padding:10px 11px; border:1px solid #cad5e2; border-radius:8px; font-size:14px; }
         .error { color:#b42318; font-size:12px; min-height:14px; }
         .muted { color:#5b6b83; font-size:13px; }
+        .notice { border-radius:10px; padding:12px; margin-bottom:14px; }
+        .notice.rejected { background:#fff1f0; border:1px solid #f5b8b2; color:#9f1d12; }
+        .notice.pending { background:#fff8e1; border:1px solid #f0d98a; color:#7a4b00; }
+        .receipt-link { display:inline-block; padding:6px 9px; border-radius:7px; background:#5b6b83; color:#fff; margin-top:4px; }
         @media (max-width:768px){ .header{align-items:flex-start; flex-direction:column;} .form-grid{grid-template-columns:1fr;} }
     </style>
 </head>
@@ -67,6 +71,7 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
     </div>
     <div class="body">
         <div class="box" id="paymentInfo"></div>
+        <div id="paymentReviewNotice"></div>
         <div class="instructions" id="paymentInstructions">
             <a href="<?= htmlspecialchars($sbiCollectUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">Click here to make the payment using SBI Collect</a>
             <p><strong>After making payment, fill the form below and submit.</strong></p>
@@ -114,6 +119,7 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
 const paymentInfo = document.getElementById('paymentInfo');
 const paymentStatus = document.getElementById('paymentStatus');
 const paymentConfirmationForm = document.getElementById('paymentConfirmationForm');
+const paymentReviewNotice = document.getElementById('paymentReviewNotice');
 const paymentInstructions = document.getElementById('paymentInstructions');
 const submitPaymentBtn = document.getElementById('submitPaymentBtn');
 const declarationA = document.getElementById('declarationA');
@@ -125,8 +131,14 @@ function escapeHtml(v) {
   return String(value(v)).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[ch]));
 }
 function formatFee(v) { return Number(v) > 0 ? `INR ${Number(v)}/-` : '-'; }
+function statusLabel(status) { return String(status || 'not_submitted').replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase()); }
 function hasSubmittedSbiDetails(data) {
   return Boolean(data.transaction_reference || data.payment_date || data.payment_receipt_file || data.payment_submitted_at);
+}
+function isRejectedOrFailed(data) { return ['rejected', 'failed'].includes(data.payment_status); }
+function receiptLink(path) {
+  if (!path) return '-';
+  return `<a class="receipt-link" href="${escapeHtml(path)}" target="_blank" rel="noopener noreferrer">View uploaded receipt</a>`;
 }
 function areDeclarationsAccepted() { return declarationA.checked && declarationB.checked; }
 
@@ -187,16 +199,27 @@ function syncCheckboxState(checkbox, checked, disabled) {
 
 function render(data) {
   const selected = [data.course_group_1, data.course_group_2].filter(Boolean).join(' | ') || '-';
+  const previousPaymentHtml = hasSubmittedSbiDetails(data) ? `
+    <hr>
+    <div class="line"><span class="label">Previous Payment Status:</span> <span class="value">${escapeHtml(statusLabel(data.payment_status))}</span></div>
+    <div class="line"><span class="label">Previous SBI Collect Reference Number:</span> <span class="value">${escapeHtml(data.transaction_reference)}</span></div>
+    <div class="line"><span class="label">Previous Payment Date:</span> <span class="value">${escapeHtml(data.payment_date)}</span></div>
+    <div class="line"><span class="label">Previous Receipt:</span> <span class="value">${receiptLink(data.sbi_receipt_path || data.payment_receipt_file)}</span></div>
+    <div class="line"><span class="label">Submitted At:</span> <span class="value">${escapeHtml(data.payment_submitted_at)}</span></div>
+    <div class="line"><span class="label">Admin Note / Rejection Reason:</span> <span class="value">${escapeHtml(data.payment_admin_note)}</span></div>
+  ` : '';
   paymentInfo.innerHTML = `
     <div class="line"><span class="label">Applicant Name:</span> <span class="value">${escapeHtml(data.candidate_name)}</span></div>
     <div class="line"><span class="label">Selected Papers/Courses:</span> <span class="value">${escapeHtml(selected)}</span></div>
     <div class="line"><span class="label">Payable Amount:</span> <span class="value">${formatFee(data.payable_amount)}</span></div>
-    <div class="line"><span class="label">SBI Collect Reference Number:</span> <span class="value">${escapeHtml(data.transaction_reference)}</span></div>
-    <div class="line"><span class="label">Payment Date:</span> <span class="value">${escapeHtml(data.payment_date)}</span></div>
+    ${previousPaymentHtml}
   `;
 
   isPaymentAlreadyDone = data.payment_status === 'paid';
   const detailsSubmitted = hasSubmittedSbiDetails(data);
+  const allowResubmission = Boolean(data.resubmission_allowed) || isRejectedOrFailed(data);
+  const lockSubmittedDetails = detailsSubmitted && !allowResubmission;
+  paymentReviewNotice.innerHTML = '';
 
   if (isPaymentAlreadyDone) {
     paymentStatus.textContent = 'Payment verified. Redirecting to confirmation page...';
@@ -205,9 +228,10 @@ function render(data) {
     return;
   }
 
-  paymentConfirmationForm.style.display = detailsSubmitted ? 'none' : 'block';
-  paymentInstructions.style.display = detailsSubmitted ? 'none' : 'block';
-  submitPaymentBtn.disabled = detailsSubmitted;
+  paymentConfirmationForm.style.display = lockSubmittedDetails ? 'none' : 'block';
+  paymentInstructions.style.display = lockSubmittedDetails ? 'none' : 'block';
+  submitPaymentBtn.disabled = lockSubmittedDetails;
+  submitPaymentBtn.textContent = allowResubmission && detailsSubmitted ? 'Submit Updated Payment Details' : 'Submit Payment Details';
 
   if (data.transaction_reference) {
     paymentConfirmationForm.elements.transaction_id.value = data.transaction_reference;
@@ -219,9 +243,14 @@ function render(data) {
   syncCheckboxState(declarationA, false, false);
   syncCheckboxState(declarationB, false, false);
 
-  if (detailsSubmitted) {
+  if (lockSubmittedDetails) {
+    paymentReviewNotice.innerHTML = '<div class="notice pending"><strong>Payment submitted for verification.</strong> Once your payment is verified you will be able to view & download the confirmation receipt.</div>';
     paymentStatus.textContent = 'Once your payment is verified you will be able to view & download the confirmation receipt.';
     paymentStatus.style.color = '#163c70';
+  } else if (allowResubmission && detailsSubmitted) {
+    paymentReviewNotice.innerHTML = '<div class="notice rejected"><strong>Your earlier payment submission was rejected/failed.</strong> Please enter the updated SBI Collect reference number, payment date, and upload the corrected SBI Collect receipt. After submission it will move to Pending Verification.</div>';
+    paymentStatus.textContent = 'Please submit updated payment details for verification.';
+    paymentStatus.style.color = '#9f1d12';
   }
 }
 
