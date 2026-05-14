@@ -48,6 +48,9 @@ if (!is_array($courses)) {
 $applicationFee = isset($courses['application_fee']) && (int) $courses['application_fee'] > 0
     ? (int) $courses['application_fee']
     : calculateApplicationFee((string) ($courses['course_group_1'] ?? ''), (string) ($courses['course_group_2'] ?? ''));
+$paymentStatus = (string) ($application['payment_status'] ?? 'not_submitted');
+$editablePaymentStatuses = ['not_submitted', 'rejected', 'failed'];
+
 
 function validatePaymentReceiptFile(array $file): ?string
 {
@@ -143,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         jsonResponse(['success' => false, 'message' => 'Invalid payment action.'], 400);
     }
 
-    if ((string) ($application['payment_status'] ?? 'not_submitted') === 'paid') {
+    if ($paymentStatus === 'paid') {
         jsonResponse([
             'success' => true,
             'message' => 'Payment is already verified as paid. Redirecting to confirmation page.',
@@ -155,17 +158,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         || trim((string) ($application['sbi_payment_date'] ?? $application['payment_datetime'] ?? '')) !== ''
         || trim((string) ($application['sbi_receipt_path'] ?? $application['payment_receipt_file'] ?? '')) !== ''
         || trim((string) ($application['payment_submitted_at'] ?? '')) !== '';
-    if ($hasSubmittedSbiDetails) {
+    $canEditPaymentDetails = in_array($paymentStatus, $editablePaymentStatuses, true);
+    if ($hasSubmittedSbiDetails && !$canEditPaymentDetails) {
         jsonResponse([
             'success' => true,
             'message' => 'Once your payment is verified you will be able to view & download the confirmation receipt.',
             'data' => [
-                'payment_status' => $application['payment_status'] ?? 'pending_verification',
+                'payment_status' => $paymentStatus,
                 'payment_amount' => $application['payment_amount'] ?? $applicationFee,
                 'payment_date' => paymentDateForResponse($application['sbi_payment_date'] ?? null, $application['payment_datetime'] ?? null),
                 'transaction_reference' => $application['sbi_reference_no'] ?? $application['transaction_reference'] ?? null,
                 'payment_receipt_file' => $application['sbi_receipt_path'] ?? $application['payment_receipt_file'] ?? null,
                 'sbi_receipt_path' => $application['sbi_receipt_path'] ?? null,
+                'payment_submitted_at' => $application['payment_submitted_at'] ?? null,
+                'payment_admin_note' => $application['payment_admin_note'] ?? null,
+                'resubmission_allowed' => false,
             ],
         ]);
     }
@@ -275,7 +282,7 @@ jsonResponse([
     'data' => [
         'application_id' => $application['application_id'] ?? '',
         'candidate_name' => $application['candidate_name'] ?? '',
-        'payment_status' => $application['payment_status'] ?? 'not_submitted',
+        'payment_status' => $paymentStatus,
         'payment_mode' => $application['payment_mode'] ?? null,
         'payment_amount' => $application['payment_amount'] ?? null,
         'payment_datetime' => $application['payment_datetime'] ?? null,
@@ -289,6 +296,7 @@ jsonResponse([
         'payment_admin_note' => $application['payment_admin_note'] ?? null,
         'payment_demo_flag' => $application['payment_demo_flag'] ?? 0,
         'payment_final_submitted_at' => $progress['payment_final_submitted_at'] ?? null,
+        'resubmission_allowed' => in_array($paymentStatus, $editablePaymentStatuses, true),
         'payable_amount' => $applicationFee,
         'course_group_1' => $courses['course_group_1'] ?? '',
         'course_group_2' => $courses['course_group_2'] ?? '',

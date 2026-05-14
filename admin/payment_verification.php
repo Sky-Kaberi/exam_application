@@ -22,7 +22,7 @@ function paymentStatusBadgeClass(string $status): string
         return 'warning';
     }
 
-    if ($status === 'rejected') {
+    if ($status === 'rejected' || $status === 'failed') {
         return 'danger';
     }
 
@@ -96,7 +96,7 @@ if (!in_array($pageSize, $allowedPageSizes, true)) {
 }
 
 $statusFilter = trim((string) ($_GET['status'] ?? 'pending_verification'));
-if (!in_array($statusFilter, ['all', 'not_submitted', 'pending_verification', 'paid', 'rejected'], true)) {
+if (!in_array($statusFilter, ['all', 'not_submitted', 'pending_verification', 'paid', 'rejected', 'failed'], true)) {
     $statusFilter = 'pending_verification';
 }
 
@@ -189,6 +189,7 @@ unset($queryWithoutPage['page']);
                         <option value="not_submitted" <?= $statusFilter === 'not_submitted' ? 'selected' : '' ?>>Not Submitted</option>
                         <option value="paid" <?= $statusFilter === 'paid' ? 'selected' : '' ?>>Paid</option>
                         <option value="rejected" <?= $statusFilter === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                        <option value="failed" <?= $statusFilter === 'failed' ? 'selected' : '' ?>>Failed</option>
                         <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>All</option>
                     </select>
                 </div>
