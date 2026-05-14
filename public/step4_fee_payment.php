@@ -135,7 +135,7 @@ function statusLabel(status) { return String(status || 'not_submitted').replace(
 function hasSubmittedSbiDetails(data) {
   return Boolean(data.transaction_reference || data.payment_date || data.payment_receipt_file || data.payment_submitted_at);
 }
-function isRejectedOrFailed(data) { return ['rejected', 'failed'].includes(data.payment_status); }
+function isRejected(data) { return data.payment_status === 'rejected'; }
 function receiptLink(path) {
   if (!path) return '-';
   return `<a class="receipt-link" href="${escapeHtml(path)}" target="_blank" rel="noopener noreferrer">View uploaded receipt</a>`;
@@ -217,7 +217,7 @@ function render(data) {
 
   isPaymentAlreadyDone = data.payment_status === 'paid';
   const detailsSubmitted = hasSubmittedSbiDetails(data);
-  const allowResubmission = Boolean(data.resubmission_allowed) || isRejectedOrFailed(data);
+  const allowResubmission = Boolean(data.resubmission_allowed) || isRejected(data);
   const lockSubmittedDetails = detailsSubmitted && !allowResubmission;
   paymentReviewNotice.innerHTML = '';
 
@@ -248,7 +248,7 @@ function render(data) {
     paymentStatus.textContent = 'Once your payment is verified you will be able to view & download the confirmation receipt.';
     paymentStatus.style.color = '#163c70';
   } else if (allowResubmission && detailsSubmitted) {
-    paymentReviewNotice.innerHTML = '<div class="notice rejected"><strong>Your earlier payment submission was rejected/failed.</strong> Please enter the updated SBI Collect reference number, payment date, and upload the corrected SBI Collect receipt. After submission it will move to Pending Verification.</div>';
+    paymentReviewNotice.innerHTML = '<div class="notice rejected"><strong>Your earlier payment submission was rejected.</strong> Please enter the updated SBI Collect reference number, payment date, and upload the corrected SBI Collect receipt. After submission it will move to Pending Verification.</div>';
     paymentStatus.textContent = 'Please submit updated payment details for verification.';
     paymentStatus.style.color = '#9f1d12';
   }
