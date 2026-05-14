@@ -233,11 +233,16 @@ function render(data) {
   submitPaymentBtn.disabled = lockSubmittedDetails;
   submitPaymentBtn.textContent = allowResubmission && detailsSubmitted ? 'Submit Updated Payment Details' : 'Submit Payment Details';
 
-  if (data.transaction_reference) {
-    paymentConfirmationForm.elements.transaction_id.value = data.transaction_reference;
-  }
-  if (data.payment_date) {
-    paymentConfirmationForm.elements.payment_date.value = data.payment_date;
+  if (isRejected(data)) {
+    paymentConfirmationForm.elements.transaction_id.value = '';
+    paymentConfirmationForm.elements.payment_date.value = '';
+  } else {
+    if (data.transaction_reference) {
+      paymentConfirmationForm.elements.transaction_id.value = data.transaction_reference;
+    }
+    if (data.payment_date) {
+      paymentConfirmationForm.elements.payment_date.value = data.payment_date;
+    }
   }
 
   syncCheckboxState(declarationA, false, false);
