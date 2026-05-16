@@ -32,9 +32,9 @@ $newApplicationId = trim((string) ($_GET['application_id'] ?? ($_SESSION['new_ap
         .help-links { margin-top:14px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
         .help-links a { color:#FFA500; }
 
-        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
-        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
-        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand { display:grid; grid-template-columns:64px minmax(0, 1fr) 64px; align-items:center; gap:12px; text-align:center; margin-bottom:20px; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; justify-self:center; }
+        .site-brand-title { font-weight:700; font-size:clamp(16px, 4vw, 18px); line-height:1.25; }
         .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
     </style>
 </head>
