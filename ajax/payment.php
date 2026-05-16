@@ -230,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $receiptPath = 'uploads/payment_receipts/' . $safeApplicationId . '/' . $receiptName;
     $paymentDatetime = $paymentDate . ' 00:00:00';
 
-    // Candidate submissions only move to pending_verification; only admins can mark records paid.
+    // Candidate submissions move the application to Submitted while payment awaits admin verification.
     $paymentStmt = $db->prepare(
         'UPDATE applicants
          SET payment_status = :payment_status,
@@ -262,11 +262,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'payment_demo_flag' => 0,
         'id' => $applicant['id'],
     ]);
-    upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => null]);
+    upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
 
     jsonResponse([
         'success' => true,
-        'message' => 'Payment details submitted successfully. Your payment will be verified by admin.',
+        'message' => 'Payment details submitted successfully. Your application status is Submitted and your payment will be verified by admin.',
         'data' => [
             'payment_status' => 'pending_verification',
             'payment_amount' => $applicationFee,
