@@ -29,23 +29,23 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Step 4 - Fee Payment</title>
     <style>
-        body { font-family: Arial,sans-serif; background:#f4f7fb; margin:0; padding:20px; }
+        body { font-family: Arial,sans-serif; background:#fff8ec; margin:0; padding:20px; }
         .card { max-width:860px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
-        .header { background:#184d9b; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .header { background:#FFA500; color:#1f2937; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
         .body { padding:20px; }
         .box { border:1px solid #d7e0ed; border-radius:10px; padding:14px; margin-bottom:14px; }
         .line { margin:8px 0; }
         .label { color:#4d5f79; font-size:13px; }
         .value { color:#132235; font-weight:700; }
         .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
-        a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#184d9b; color:#fff; }
+        a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#FFA500; color:#1f2937; }
         button:disabled { opacity:.65; cursor:not-allowed; }
         .secondary { background:#5b6b83; }
         .status { margin-top:10px; font-size:14px; }
         .declarations { border:1px solid #d7e0ed; border-radius:10px; padding:12px; margin-top:12px; background:#f9fbff; }
-        .declarations h3 { margin:0 0 10px; font-size:15px; color:#123f7f; }
+        .declarations h3 { margin:0 0 10px; font-size:15px; color:#c97800; }
         .declaration-item { display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; color:#132235; }
-        .instructions { background:#eef4ff; border:1px solid #bfd0ee; border-radius:10px; padding:14px; margin-bottom:14px; color:#163c70; }
+        .instructions { background:#fff3d8; border:1px solid #e8b45b; border-radius:10px; padding:14px; margin-bottom:14px; color:#9a5f00; }
         .instructions p { margin:10px 0 0; }
         .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
         .field { display:flex; flex-direction:column; gap:5px; }
@@ -57,6 +57,11 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
         .notice.rejected { background:#fff1f0; border:1px solid #f5b8b2; color:#9f1d12; }
         .notice.pending { background:#fff8e1; border:1px solid #f0d98a; color:#7a4b00; }
         .receipt-link { display:inline-block; padding:6px 9px; border-radius:7px; background:#5b6b83; color:#fff; margin-top:4px; }
+
+        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
+        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
         @media (max-width:768px){ .header{align-items:flex-start; flex-direction:column;} .form-grid{grid-template-columns:1fr;} }
     </style>
 </head>
@@ -64,6 +69,14 @@ $sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
 <div class="card">
     <div class="header">
         <div>
+            <div class="site-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
+                    <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
             <h2 style="margin:0;">Step 4: Fee Payment</h2>
             <small>Application Number: <?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></small>
         </div>
@@ -251,7 +264,7 @@ function render(data) {
   if (lockSubmittedDetails) {
     paymentReviewNotice.innerHTML = '<div class="notice pending"><strong>Payment submitted for verification.</strong> Once your payment is verified you will be able to view & download the confirmation receipt.</div>';
     paymentStatus.textContent = 'Once your payment is verified you will be able to view & download the confirmation receipt.';
-    paymentStatus.style.color = '#163c70';
+    paymentStatus.style.color = '#9a5f00';
   } else if (allowResubmission && detailsSubmitted) {
     paymentReviewNotice.innerHTML = '<div class="notice rejected"><strong>Your earlier payment submission was rejected.</strong> Please enter the updated SBI Collect reference number, payment date, and upload the corrected SBI Collect receipt. After submission it will move to Pending Verification.</div>';
     paymentStatus.textContent = 'Please submit updated payment details for verification.';

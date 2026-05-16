@@ -13,19 +13,32 @@ require_once __DIR__ . '/../includes/functions.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Application ID</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:24px; }
+        body { font-family: Arial, sans-serif; background:#fff8ec; margin:0; padding:24px; }
         .card { max-width:540px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:24px; }
         .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
         input, button { padding:11px 12px; border-radius:8px; border:1px solid #cad5e2; font-size:14px; }
-        button { background:#184d9b; color:#fff; border:none; cursor:pointer; width:100%; }
+        button { background:#FFA500; color:#1f2937; border:none; cursor:pointer; width:100%; }
         .status { font-size:13px; min-height:18px; margin-bottom:12px; }
         .success { color:#0a7a35; }
         .error { color:#b42318; }
         .link { margin-top:12px; display:block; text-align:center; }
+
+        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
+        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
     </style>
 </head>
 <body>
 <div class="card">
+    <div class="site-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
+                    <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
     <h1>Forgot Application ID</h1>
     <p>Enter your registered email ID and mobile number. The Application ID will be sent by SMS and email.</p>
     <form id="forgotApplicationIdForm">

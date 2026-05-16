@@ -26,7 +26,7 @@ if ($paymentStatus !== 'paid') {
             body { font-family: Arial, sans-serif; background:#eef2f7; margin:0; padding:24px; color:#1f2937; }
             .card { max-width:720px; margin:50px auto; background:#fff; border-radius:12px; padding:24px; box-shadow:0 10px 24px rgba(0,0,0,.08); }
             .alert { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:14px; margin:12px 0 18px; }
-            a { display:inline-block; padding:10px 14px; border-radius:8px; background:#184d9b; color:#fff; text-decoration:none; }
+            a { display:inline-block; padding:10px 14px; border-radius:8px; background:#FFA500; color:#1f2937; text-decoration:none; }
         </style>
     </head>
     <body>
@@ -52,8 +52,8 @@ if ($paymentStatus !== 'paid') {
         :root {
             --ink: #1f2937;
             --muted: #6b7280;
-            --border: #d6dde8;
-            --header-bg: #f3f6fb;
+            --border: #e8b45b;
+            --header-bg: #fff3d8;
             --paper-bg: #ffffff;
             --panel-bg: #fbfcfe;
         }
@@ -65,7 +65,7 @@ if ($paymentStatus !== 'paid') {
             padding: 20px;
             font-family: "Segoe UI", Arial, sans-serif;
             color: var(--ink);
-            background: #eef2f7;
+            background: #fff8ec;
         }
 
         .page-wrap {
@@ -83,11 +83,11 @@ if ($paymentStatus !== 'paid') {
 
         .btn {
             padding: 10px 14px;
-            border: 1px solid #1f2937;
+            border: 1px solid #c97800;
             border-radius: 6px;
             text-decoration: none;
-            color: #ffffff;
-            background: #1f2937;
+            color: #1f2937;
+            background: #FFA500;
             font-size: 14px;
             cursor: pointer;
         }
@@ -106,11 +106,30 @@ if ($paymentStatus !== 'paid') {
         }
 
         .doc-header {
-            text-align: center;
             border: 1px solid var(--border);
             padding: 14px 16px;
             background: var(--header-bg);
             margin-bottom: 14px;
+        }
+
+        .board-header {
+            display: grid;
+            grid-template-columns: 74px 1fr 74px;
+            align-items: center;
+            gap: 14px;
+            text-align: center;
+        }
+
+        .board-logo {
+            width: 68px;
+            height: 68px;
+            object-fit: contain;
+            justify-self: center;
+        }
+
+        .doc-title {
+            text-align: center;
+            margin-top: 10px;
         }
 
         .doc-header h1,
@@ -147,7 +166,7 @@ if ($paymentStatus !== 'paid') {
         }
 
         .card-header {
-            background: #f8fafc;
+            background: #fff3d8;
             padding: 10px 12px;
             border-bottom: 1px solid var(--border);
             font-size: 15px;
@@ -189,7 +208,7 @@ if ($paymentStatus !== 'paid') {
         }
 
         .kv-key {
-            background: #f8fafc;
+            background: #fff8ec;
             color: #374151;
             font-weight: 600;
             border-right: 1px solid var(--border);
@@ -279,7 +298,65 @@ if ($paymentStatus !== 'paid') {
         }
 
         .instructions {
-            background: #f8fafc;
+            background: #fff8ec;
+        }
+
+        .candidate-declaration {
+            border: 1px solid var(--border);
+            background: #fffdf7;
+            margin-top: 14px;
+            padding: 14px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .candidate-declaration h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+        }
+
+        .candidate-declaration p {
+            margin: 0 0 8px;
+            line-height: 1.45;
+            font-size: 14px;
+        }
+
+        .signature-block {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 18px;
+            text-align: center;
+        }
+
+        .signature-box {
+            min-width: 220px;
+        }
+
+        .signature-box img {
+            max-width: 180px;
+            max-height: 60px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 4px;
+        }
+
+        .signature-line {
+            border-top: 1px solid var(--ink);
+            padding-top: 5px;
+            font-weight: 700;
+        }
+
+        .doc-footer {
+            border-top: 1px solid var(--border);
+            margin-top: 16px;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .instructions ul {
@@ -336,8 +413,8 @@ if ($paymentStatus !== 'paid') {
 
         @media print {
             :root {
-                --border: #bcc7d6;
-                --header-bg: #eef3fb;
+                --border: #d89a21;
+                --header-bg: #fff3d8;
                 --panel-bg: #fcfdff;
             }
 
@@ -372,6 +449,8 @@ if ($paymentStatus !== 'paid') {
             }
 
             .doc-header,
+            .candidate-declaration,
+            .doc-footer,
             .card,
             .address-block,
             .media-box,
@@ -513,6 +592,14 @@ function addressBlock(title, lines) {
         </article>`;
 }
 
+const BOARD_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png';
+const HEADER_EXAM_NAME = 'JEMPAS(PG) - 2025';
+const FOOTER_EXAM_NAME = 'JEMAS(PG) - 2025';
+const DECLARATION_TEXTS = [
+    'I hereby declare that the information furnished in this application is true and correct to the best of my knowledge and belief.',
+    'I understand that if any information is found incorrect at any stage, my candidature may be cancelled.'
+];
+
 function imageBox(label, rawPath, altText) {
     if (!rawPath) {
         return `
@@ -540,15 +627,60 @@ function imageBox(label, rawPath, altText) {
 }
 
 function buildHeader(step1, confirmationDateTime) {
-    const sessionYear = '2025';
     return `
         <header class="doc-header">
-            <h1>National Examination Board</h1>
-            <p>Entrance Examination Application</p>
-            <p>Session / Year: ${escapeHtml(sessionYear)}</p>
-            <h2>Confirmation Page</h2>
-            <p>Application Number: <strong>${escapeHtml(step1?.application_id)}</strong></p>
+            <div class="board-header">
+                <img class="board-logo" src="${BOARD_LOGO_URL}" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <h1>West Bengal Joint Entrance Examinations Board</h1>
+                    <h2>${escapeHtml(HEADER_EXAM_NAME)}</h2>
+                </div>
+                <img class="board-logo" src="${BOARD_LOGO_URL}" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
+            <div class="doc-title">
+                <h2>Confirmation Receipt</h2>
+                <p>Application Number: <strong>${escapeHtml(step1?.application_id)}</strong></p>
+            </div>
         </header>`;
+}
+
+function formatDownloadDate(date = new Date()) {
+    return date.toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+function buildDeclaration(step1, images) {
+    const safeSignaturePath = images?.signature_path ? `../public/${String(images.signature_path).replace(/^\/+/, '')}` : '';
+    const signatureImage = safeSignaturePath
+        ? `<img src="${safeSignaturePath}" alt="Candidate Signature" onerror="this.remove();">`
+        : '';
+
+    return `
+        <section class="candidate-declaration">
+            <h3>Declaration Agreed by Candidate</h3>
+            ${DECLARATION_TEXTS.map(text => `<p>${escapeHtml(text)}</p>`).join('')}
+            <div class="signature-block">
+                <div class="signature-box">
+                    ${signatureImage}
+                    <div class="signature-line">Signature</div>
+                    <div>${escapeHtml(step1?.candidate_name)}</div>
+                </div>
+            </div>
+        </section>`;
+}
+
+function buildFooter() {
+    return `
+        <footer class="doc-footer">
+            <span>Downloading Date:${escapeHtml(formatDownloadDate())}</span>
+            <span>${escapeHtml(FOOTER_EXAM_NAME)}</span>
+        </footer>`;
 }
 
 async function loadConfirmation() {
@@ -633,6 +765,8 @@ async function loadConfirmation() {
             ${sectionCard('Address Details', addressHtml, 'span-12')}
             ${sectionCard('Important Instructions', instructionsHtml, 'span-12')}
         </div>
+        ${buildDeclaration(d.step1, d.images)}
+        ${buildFooter()}
     `;
 }
 

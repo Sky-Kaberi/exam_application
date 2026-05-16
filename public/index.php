@@ -15,12 +15,12 @@ $captchaChallenge = createLocalCaptchaChallenge();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Application - Step 1 Registration</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:24px; }
+        body { font-family: Arial, sans-serif; background:#fff8ec; margin:0; padding:24px; }
         .container { max-width: 960px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
-        .header { background:#184d9b; color:#fff; padding:20px 24px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+        .header { background:#FFA500; color:#1f2937; padding:20px 24px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
         .header h1 { margin:0 0 8px; }
         .header p { margin:0; }
-        .header-login-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.55); border-radius:999px; padding:8px 12px; white-space:nowrap; font-size:13px; }
+        .header-login-link { color:#1f2937; text-decoration:none; border:1px solid rgba(31,41,55,.45); border-radius:999px; padding:8px 12px; white-space:nowrap; font-size:13px; }
         .header-login-link:hover { background:rgba(255,255,255,.12); }
         .content { padding:24px; }
         .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
@@ -29,7 +29,7 @@ $captchaChallenge = createLocalCaptchaChallenge();
         input, select, button { padding:11px 12px; border:1px solid #cad5e2; border-radius:8px; font-size:14px; }
         .otp-row { display:flex; gap:8px; }
         .otp-row input { flex:1; }
-        button { background:#184d9b; color:#fff; cursor:pointer; border:none; }
+        button { background:#FFA500; color:#1f2937; cursor:pointer; border:none; }
         button.secondary { background:#5b6b83; }
         button:disabled { opacity:.6; cursor:not-allowed; }
         .status { margin-top:8px; font-size:13px; }
@@ -37,10 +37,15 @@ $captchaChallenge = createLocalCaptchaChallenge();
         .status.error { color:#b42318; }
         label.error { color:#b42318; font-size:12px; margin-top:4px; }
         input.error, select.error { border-color:#b42318; background:#fff7f7; }
-        .app-box { background:#eef4ff; border:1px dashed #184d9b; padding:14px; border-radius:8px; margin-bottom:20px; display:none; }
+        .app-box { background:#fff3d8; border:1px dashed #FFA500; padding:14px; border-radius:8px; margin-bottom:20px; display:none; }
         .captcha-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .captcha-expression { display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:10px 16px; border-radius:10px; background:#f2f6ff; border:1px solid #c8d7f7; color:#123c7a; font-size:22px; font-weight:700; letter-spacing:.5px; }
-        button.ghost { background:#eef2f8; color:#1d3557; border:1px solid #cad5e2; }
+        .captcha-expression { display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:10px 16px; border-radius:10px; background:#fff8ec; border:1px solid #e8b45b; color:#9a5f00; font-size:22px; font-weight:700; letter-spacing:.5px; }
+        button.ghost { background:#fff8ec; color:#9a5f00; border:1px solid #cad5e2; }
+
+        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
+        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } }
     </style>
 </head>
@@ -48,6 +53,14 @@ $captchaChallenge = createLocalCaptchaChallenge();
 <div class="container">
     <div class="header">
         <div>
+            <div class="site-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
+                    <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
             <h1>Online Registration - Step 1</h1>
             <p>Create your profile, verify mobile/email through OTP, and generate the application ID.</p>
         </div>
