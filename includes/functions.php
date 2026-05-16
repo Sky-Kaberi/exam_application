@@ -202,16 +202,16 @@ function sendApplicationIdGeneratedSms(string $mobile, string $applicationId): b
 function sendPaymentSuccessSms(string $mobile, string $amount, string $transactionId): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_PAYMENT_SUCCESS, [
-        buildSmsTemplateValue('AMOUNT', $amount),
-        buildSmsTemplateValue('examname-year', getExamDisplayName()),
-        buildSmsTemplateValue('TXNID', $transactionId),
+        buildSmsTemplateValue('var1', $amount),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+        buildSmsTemplateValue('var3', $transactionId),
     ]);
 }
 
 function sendApplicationCompletedSms(string $mobile): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_COMPLETED, [
-        buildSmsTemplateValue('examname-year', getExamDisplayName()),
+        buildSmsTemplateValue('var1', getExamDisplayName()),
     ]);
 }
 
