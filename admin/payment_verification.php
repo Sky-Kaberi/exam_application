@@ -44,13 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'reject' && $adminNote === '') {
         $errors[] = 'Admin note / rejection reason is required when rejecting a payment.';
     } else {
-        $currentStmt = $db->prepare('SELECT payment_status FROM applicants WHERE id = :id LIMIT 1');
+        $currentStmt = $db->prepare('SELECT payment_status, mobile_no, payment_amount, sbi_reference_no FROM applicants WHERE id = :id LIMIT 1');
         $currentStmt->execute(['id' => $applicantId]);
-        $currentStatus = $currentStmt->fetchColumn();
+        $currentApplicant = $currentStmt->fetch();
 
-        if ($currentStatus === false) {
+        if (!$currentApplicant) {
             $errors[] = 'Candidate payment record not found.';
-        } elseif ((string) $currentStatus !== 'pending_verification') {
+        } elseif ((string) $currentApplicant['payment_status'] !== 'pending_verification') {
             $errors[] = 'Only pending payment submissions can be accepted or rejected.';
         } elseif ($action === 'mark_paid') {
             // Admin verification is the only place where candidate payments become paid.
@@ -68,7 +68,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'payment_admin_note' => $adminNote !== '' ? $adminNote : null,
                 'id' => $applicantId,
             ]);
+            $paymentSmsSent = sendPaymentSuccessSms(
+                (string) $currentApplicant['mobile_no'],
+                (string) ((int) ($currentApplicant['payment_amount'] ?? 0)),
+                (string) ($currentApplicant['sbi_reference_no'] ?? '')
+            );
+            $completionSmsSent = sendApplicationCompletedSms((string) $currentApplicant['mobile_no']);
             $messages[] = 'Payment marked as Paid successfully.';
+            if (!$paymentSmsSent || !$completionSmsSent) {
+                $messages[] = 'Payment verification SMS notification could not be sent right now. Please check SMS gateway logs.';
+            }
         } else {
             $updateStmt = $db->prepare(
                 'UPDATE applicants

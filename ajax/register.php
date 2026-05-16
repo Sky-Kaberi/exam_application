@@ -93,6 +93,7 @@ $submissionEmailSent = sendApplicationSubmissionEmail(
     $applicationId,
     (string) $payload['candidate_name']
 );
+$applicationIdSmsSent = sendApplicationIdGeneratedSms((string) $payload['mobile_no'], $applicationId);
 
 jsonResponse([
     'success' => true,
@@ -100,4 +101,5 @@ jsonResponse([
     'redirect_to' => '../public/login.php?application_id=' . urlencode($applicationId),
     'message' => 'Step 1 registration completed.',
     'email_sent' => $submissionEmailSent,
+    'sms_sent' => $applicationIdSmsSent,
 ]);
