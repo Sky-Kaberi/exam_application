@@ -691,6 +691,15 @@ function validateStep2BasicInput(array $data): array
     return $errors;
 }
 
+function validateApplicantPassword(string $password): ?string
+{
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*\-]).{8,13}$/', $password)) {
+        return 'Password must be 8-13 chars and include uppercase, lowercase, number and special character.';
+    }
+
+    return null;
+}
+
 function validateRegistrationInput(array $data): array
 {
     $errors = [];
@@ -754,8 +763,9 @@ function validateRegistrationInput(array $data): array
     }
 
     $password = (string) ($data['password'] ?? '');
-    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*\-]).{8,13}$/', $password)) {
-        $errors['password'] = 'Password must be 8-13 chars and include uppercase, lowercase, number and special character.';
+    $passwordError = validateApplicantPassword($password);
+    if ($passwordError !== null) {
+        $errors['password'] = $passwordError;
     }
 
     if ($password !== (string) ($data['confirm_password'] ?? '')) {
