@@ -30,7 +30,7 @@ $captchaChallenge = createLocalCaptchaChallenge();
         .otp-row { display:flex; gap:8px; }
         .otp-row input { flex:1; }
         button { background:#FFA500; color:#1f2937; cursor:pointer; border:none; }
-        button.secondary { background:#5b6b83; }
+        button.secondary { background:#5b6b83; color:#fff; }
         button:disabled { opacity:.6; cursor:not-allowed; }
         .status { margin-top:8px; font-size:13px; }
         .status.success { color:#0a7a35; }

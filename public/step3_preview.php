@@ -26,7 +26,7 @@ $applicant = requireApplicantLoginForPage('login.php');
         .v { color:#132235; font-weight:600; word-break:break-word; }
         .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
         a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#FFA500; color:#1f2937; }
-        button.secondary, a.secondary { background:#5b6b83; }
+        button.secondary, a.secondary { background:#5b6b83; color:#fff; }
         .status { margin-top:10px; font-size:14px; }
         img { max-width:220px; max-height:140px; border:1px solid #d7e0ed; border-radius:8px; padding:4px; }
         .address-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }

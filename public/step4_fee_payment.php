@@ -40,7 +40,7 @@ $sbiCollectUrl = 'https://onlinesbi.sbi.bank.in/sbicollect/icollecthome.htm?sara
         .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
         a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#FFA500; color:#1f2937; }
         button:disabled { opacity:.65; cursor:not-allowed; }
-        .secondary { background:#5b6b83; }
+        .secondary { background:#5b6b83; color:#fff; }
         .status { margin-top:10px; font-size:14px; }
         .declarations { border:1px solid #d7e0ed; border-radius:10px; padding:12px; margin-top:12px; background:#f9fbff; }
         .declarations h3 { margin:0 0 10px; font-size:15px; color:#c97800; }
