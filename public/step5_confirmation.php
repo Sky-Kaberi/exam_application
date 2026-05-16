@@ -95,6 +95,7 @@ if ($paymentStatus !== 'paid') {
         .btn.secondary {
             background: #6b7280;
             border-color: #6b7280;
+            color: #fff;
         }
 
         .document {

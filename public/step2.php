@@ -42,7 +42,7 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
         .error { color:#b42318; font-size:12px; min-height:14px; }
         .actions { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
         button { cursor:pointer; border:none; background:#FFA500; color:#1f2937; }
-        .secondary { background:#5b6b83; }
+        .secondary { background:#5b6b83; color:#fff; }
         .muted { color:#5b6b83; }
         .status { margin-top:10px; font-size:13px; }
         .upload-preview img { max-width:220px; max-height:140px; border:1px solid #d4dbe6; border-radius:8px; padding:4px; background:#fff; }
