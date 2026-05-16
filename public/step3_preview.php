@@ -14,25 +14,30 @@ $applicant = requireApplicantLoginForPage('login.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Step 3 - Preview & Final Submit</title>
     <style>
-        body { font-family: Arial,sans-serif; background:#f4f7fb; margin:0; padding:20px; }
+        body { font-family: Arial,sans-serif; background:#fff8ec; margin:0; padding:20px; }
         .card { max-width:1000px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
-        .header { background:#184d9b; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+        .header { background:#FFA500; color:#1f2937; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
         .body { padding:20px; }
         .section { border:1px solid #d7e0ed; border-radius:10px; padding:14px; margin-bottom:14px; }
-        .section h3 { margin:0 0 10px; color:#123f7f; }
+        .section h3 { margin:0 0 10px; color:#c97800; }
         .row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; }
         .item { padding:8px; background:#f9fbff; border-radius:8px; }
         .k { color:#4d5f79; font-size:12px; display:block; }
         .v { color:#132235; font-weight:600; word-break:break-word; }
         .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
-        a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#184d9b; color:#fff; }
+        a, button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; background:#FFA500; color:#1f2937; }
         button.secondary, a.secondary { background:#5b6b83; }
         .status { margin-top:10px; font-size:14px; }
         img { max-width:220px; max-height:140px; border:1px solid #d7e0ed; border-radius:8px; padding:4px; }
         .address-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
         .address-block { border:1px solid #d7e0ed; border-radius:8px; padding:10px; background:#f9fbff; }
-        .address-block h4 { margin:0 0 8px; color:#123f7f; font-size:15px; }
+        .address-block h4 { margin:0 0 8px; color:#c97800; font-size:15px; }
         .address-line { margin:0; color:#132235; font-weight:600; line-height:1.45; word-break:break-word; }
+
+        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
+        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
         @media (max-width:768px){ .row{grid-template-columns:1fr;} }
         @media (max-width:768px){ .address-grid{grid-template-columns:1fr;} }
     </style>
@@ -41,6 +46,14 @@ $applicant = requireApplicantLoginForPage('login.php');
 <div class="card">
     <div class="header">
         <div>
+            <div class="site-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
+                    <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
             <h2 style="margin:0;">Step 3: Preview & Final Submit</h2>
             <small>Application Number: <?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></small>
         </div>

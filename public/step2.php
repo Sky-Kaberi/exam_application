@@ -23,32 +23,37 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Application - Step 2</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:18px; }
+        body { font-family: Arial, sans-serif; background:#fff8ec; margin:0; padding:18px; }
         .container { max-width: 980px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
-        .header { background:#184d9b; color:#fff; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-        .header a { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.5); border-radius:8px; padding:8px 10px; }
+        .header { background:#FFA500; color:#1f2937; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+        .header a { color:#1f2937; text-decoration:none; border:1px solid rgba(31,41,55,.45); border-radius:8px; padding:8px 10px; }
         .body { padding:20px; }
         .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-        .tab-btn { background:#eef3fd; color:#123f7f; border:1px solid #bfd0ee; border-radius:8px; padding:10px 12px; cursor:pointer; font-size:14px; }
-        .tab-btn.active { background:#184d9b; color:#fff; border-color:#184d9b; }
+        .tab-btn { background:#fff3d8; color:#c97800; border:1px solid #e8b45b; border-radius:8px; padding:10px 12px; cursor:pointer; font-size:14px; }
+        .tab-btn.active { background:#FFA500; color:#1f2937; border-color:#FFA500; }
         .tab-panel { display:none; }
         .tab-panel.active { display:block; }
         .grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
         .field { display:flex; flex-direction:column; gap:5px; }
         .field.full { grid-column:1 / -1; }
-        .section-title { margin-top:18px; margin-bottom:8px; color:#123f7f; font-size:17px; }
+        .section-title { margin-top:18px; margin-bottom:8px; color:#c97800; font-size:17px; }
         input, select, textarea, button { padding:10px 11px; border:1px solid #cad5e2; border-radius:8px; font-size:14px; }
         textarea { min-height:90px; }
         .error { color:#b42318; font-size:12px; min-height:14px; }
         .actions { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
-        button { cursor:pointer; border:none; background:#184d9b; color:#fff; }
+        button { cursor:pointer; border:none; background:#FFA500; color:#1f2937; }
         .secondary { background:#5b6b83; }
         .muted { color:#5b6b83; }
         .status { margin-top:10px; font-size:13px; }
         .upload-preview img { max-width:220px; max-height:140px; border:1px solid #d4dbe6; border-radius:8px; padding:4px; background:#fff; }
         ul.instructions { margin:0; padding-left:18px; color:#4c5f79; }
-        .info-box { background:#eef4ff; border:1px solid #bfd0ee; border-radius:8px; padding:10px 12px; margin-bottom:12px; color:#163c70; }
-        .fee-chip { display:inline-block; margin-top:8px; padding:8px 12px; border-radius:999px; background:#184d9b; color:#fff; font-weight:700; }
+        .info-box { background:#fff3d8; border:1px solid #e8b45b; border-radius:8px; padding:10px 12px; margin-bottom:12px; color:#9a5f00; }
+        .fee-chip { display:inline-block; margin-top:8px; padding:8px 12px; border-radius:999px; background:#FFA500; color:#1f2937; font-weight:700; }
+
+        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
+        .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
+        .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } .header h1{font-size:20px;} }
     </style>
 </head>
@@ -56,6 +61,14 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
 <div class="container">
     <div class="header">
         <div>
+            <div class="site-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+                <div>
+                    <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
+                    <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+            </div>
             <h1>Step 2 Application Form</h1>
             <p>Application Number: <strong><?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></strong></p>
         </div>
