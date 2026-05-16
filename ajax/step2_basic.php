@@ -16,7 +16,7 @@ if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && $_SERVER['REQUEST_
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $db->prepare('SELECT nationality, domicile, religion, category, sub_category_details, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :applicant_id LIMIT 1');
+    $stmt = $db->prepare('SELECT nationality, domicile, religion, category, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :applicant_id LIMIT 1');
     $stmt->execute(['applicant_id' => $applicant['id']]);
     $row = $stmt->fetch();
 
@@ -27,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'domicile' => '',
             'religion' => '',
             'category' => '',
-            'sub_category_details' => '',
             'pwd_status' => 'No',
             'disability_type' => '',
             'disability_percentage' => '',
@@ -52,7 +51,7 @@ $saveData = [
     'domicile' => $payload['domicile'],
     'religion' => $payload['religion'],
     'category' => $payload['category'],
-    'sub_category_details' => trim((string) ($payload['sub_category_details'] ?? '')),
+    'sub_category_details' => '',
     'pwd_status' => $payload['pwd_status'],
     'disability_type' => $payload['pwd_status'] === 'Yes' ? $payload['disability_type'] : null,
     'disability_percentage' => $payload['pwd_status'] === 'Yes' ? (float) $payload['disability_percentage'] : null,

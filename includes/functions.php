@@ -202,16 +202,16 @@ function sendApplicationIdGeneratedSms(string $mobile, string $applicationId): b
 function sendPaymentSuccessSms(string $mobile, string $amount, string $transactionId): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_PAYMENT_SUCCESS, [
-        buildSmsTemplateValue('var1', $amount),
-        buildSmsTemplateValue('var2', getExamDisplayName()),
-        buildSmsTemplateValue('var3', $transactionId),
+        buildSmsTemplateValue('AMOUNT', $amount),
+        buildSmsTemplateValue('examname-year', getExamDisplayName()),
+        buildSmsTemplateValue('TXNID', $transactionId),
     ]);
 }
 
 function sendApplicationCompletedSms(string $mobile): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_COMPLETED, [
-        buildSmsTemplateValue('var1', getExamDisplayName()),
+        buildSmsTemplateValue('examname-year', getExamDisplayName()),
     ]);
 }
 
@@ -445,8 +445,8 @@ function getAddressReferenceData(): array
 function getCourseOptions(): array
 {
     return [
-        'group_1' => ['DHS', 'FPM', 'MPhil CP', 'MAN', 'MPH', 'MPhil PSW', 'MPhil RMTS', 'MPT', 'MOT', 'MPO', 'MSLP', 'M.Sc. PH-HP', 'M.Sc. MB', 'M.Sc. MM'],
-        'group_2' => ['DHPE', 'Dip Diet', 'FCCT', 'FRMTS', 'M. Sc CCS', 'M. Sc OTS', 'M. Sc PS', 'MHA', 'MSc MBT', 'MSc MLT', 'PGDDRM', 'M. Sc PH-MCH'],
+        'group_1' => ['DHS', 'FPM', 'MPhil CP', 'MAN', 'MPH', 'MPhil PSW', 'MPT', 'MOT', 'MPO', 'MSLP', 'M.Sc. PH-HP', 'M.Sc. MB', 'M.Sc. MM'],
+        'group_2' => ['DHPE', 'Dip Diet', 'M.Sc. CCS', 'M.Sc. OTS', 'M.Sc. PS', 'MHA', 'M.Sc. MBT', 'M.Sc. MLT', 'PGDDRM', 'M.Sc. PH-MCH'],
         'exam_cities' => ['Kolkata - Salt Lake / New Town'],
     ];
 }

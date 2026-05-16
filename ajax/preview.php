@@ -29,7 +29,7 @@ $step1Stmt = $db->prepare('SELECT application_id, candidate_name, father_name, m
 $step1Stmt->execute(['id' => $applicant['id']]);
 $step1 = $step1Stmt->fetch();
 
-$basicStmt = $db->prepare('SELECT nationality, domicile, religion, category, sub_category_details, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :id LIMIT 1');
+$basicStmt = $db->prepare('SELECT nationality, domicile, religion, category, pwd_status, disability_type, disability_percentage, qualifying_examination, pass_status, year_of_passing, institute_name_address FROM applicant_step2_basic WHERE applicant_id = :id LIMIT 1');
 $basicStmt->execute(['id' => $applicant['id']]);
 $basic = $basicStmt->fetch();
 

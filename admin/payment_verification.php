@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'reject' && $adminNote === '') {
         $errors[] = 'Admin note / rejection reason is required when rejecting a payment.';
     } else {
-        $currentStmt = $db->prepare('SELECT payment_status, mobile_no, payment_amount, sbi_reference_no FROM applicants WHERE id = :id LIMIT 1');
+        $currentStmt = $db->prepare('SELECT application_id, candidate_name, email_id, payment_status, mobile_no, payment_amount, sbi_reference_no FROM applicants WHERE id = :id LIMIT 1');
         $currentStmt->execute(['id' => $applicantId]);
         $currentApplicant = $currentStmt->fetch();
 
@@ -74,9 +74,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string) ($currentApplicant['sbi_reference_no'] ?? '')
             );
             $completionSmsSent = sendApplicationCompletedSms((string) $currentApplicant['mobile_no']);
+            upsertApplicantProgress($db, $applicantId, ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
+            $confirmationEmailSent = sendFinalSubmissionConfirmationEmail(
+                (string) ($currentApplicant['email_id'] ?? ''),
+                (string) ($currentApplicant['application_id'] ?? ''),
+                (string) ($currentApplicant['candidate_name'] ?? '')
+            );
             $messages[] = 'Payment marked as Paid successfully.';
             if (!$paymentSmsSent || !$completionSmsSent) {
                 $messages[] = 'Payment verification SMS notification could not be sent right now. Please check SMS gateway logs.';
+            }
+            if (!$confirmationEmailSent) {
+                $messages[] = 'Final submission confirmation email could not be sent right now. Please check mailer logs.';
             }
         } else {
             $updateStmt = $db->prepare(
