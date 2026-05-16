@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+session_start();
+
+require_once __DIR__ . '/../includes/functions.php';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Application ID</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:24px; }
+        .card { max-width:540px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:24px; }
+        .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+        input, button { padding:11px 12px; border-radius:8px; border:1px solid #cad5e2; font-size:14px; }
+        button { background:#184d9b; color:#fff; border:none; cursor:pointer; width:100%; }
+        .status { font-size:13px; min-height:18px; margin-bottom:12px; }
+        .success { color:#0a7a35; }
+        .error { color:#b42318; }
+        .link { margin-top:12px; display:block; text-align:center; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Forgot Application ID</h1>
+    <p>Enter your registered email ID and mobile number. The Application ID will be sent by SMS and email.</p>
+    <form id="forgotApplicationIdForm">
+        <div class="field">
+            <label>Email ID</label>
+            <input type="email" name="email_id" required>
+        </div>
+        <div class="field">
+            <label>Mobile Number</label>
+            <input type="text" name="mobile_no" maxlength="10" required>
+        </div>
+        <div class="status" id="status"></div>
+        <button type="submit">Send Application ID</button>
+    </form>
+    <a class="link" href="login.php">Back to Login</a>
+</div>
+<script>
+const form = document.getElementById('forgotApplicationIdForm');
+const statusNode = document.getElementById('status');
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    statusNode.textContent = '';
+    statusNode.className = 'status';
+
+    try {
+        const response = await fetch('../ajax/forgot_application_id.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
+        });
+        const data = await response.json();
+        statusNode.textContent = data.message || (response.ok ? 'Request processed.' : 'Request failed.');
+        statusNode.className = `status ${response.ok && data.success ? 'success' : 'error'}`;
+    } catch (error) {
+        statusNode.textContent = 'Unable to process request right now. Please try again.';
+        statusNode.className = 'status error';
+    }
+});
+</script>
+</body>
+</html>

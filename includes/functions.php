@@ -111,6 +111,174 @@ function generateOtp(): string
     return (string) random_int(100000, 999999);
 }
 
+
+function getExamDisplayName(): string
+{
+    return defined('EXAM_DISPLAY_NAME') ? EXAM_DISPLAY_NAME : 'Exam Application';
+}
+
+function buildSmsTemplateValue(string $key, string $value): array
+{
+    return [
+        'Key' => $key,
+        'Value' => $value,
+    ];
+}
+
+function sendWbjeebSmsBsnl(string $mobile, string $templateId, array $templateValues): bool
+{
+    $mobile = preg_replace('/\D+/', '', $mobile) ?? '';
+    if (!preg_match('/^[0-9]{10}$/', $mobile)) {
+        error_log('BSNL SMS skipped: invalid mobile number.');
+        return false;
+    }
+
+    $payload = [
+        'Header' => BSNL_SMS_HEADER,
+        'Target' => $mobile,
+        'Is_Unicode' => '0',
+        'Is_Flash' => '0',
+        'Message_Type' => 'SI',
+        'Entity_Id' => BSNL_SMS_ENTITY_ID,
+        'Content_Template_Id' => $templateId,
+        'Template_Keys_and_Values' => array_values($templateValues),
+    ];
+
+    $jsonPayload = json_encode($payload);
+    if ($jsonPayload === false) {
+        error_log('BSNL SMS skipped: unable to encode payload.');
+        return false;
+    }
+
+    if (!function_exists('curl_init')) {
+        error_log('BSNL SMS skipped: cURL extension is not available.');
+        return false;
+    }
+
+    $curl = curl_init(BSNL_SMS_API_URL);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $jsonPayload);
+    curl_setopt($curl, CURLOPT_TIMEOUT, 20);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . BSNL_SMS_BEARER_TOKEN,
+        'Content-Type: application/json',
+    ]);
+
+    $response = curl_exec($curl);
+    $curlError = curl_error($curl);
+    $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+
+    if ($response === false) {
+        error_log('BSNL SMS cURL error: ' . $curlError);
+        return false;
+    }
+
+    if ($httpCode < 200 || $httpCode >= 300) {
+        error_log(sprintf('BSNL SMS HTTP %d response: %s', $httpCode, (string) $response));
+        return false;
+    }
+
+    return true;
+}
+
+function sendMobileVerificationSms(string $mobile, string $otp): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_MOBILE_OTP, [
+        buildSmsTemplateValue('var1', $otp),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+    ]);
+}
+
+function sendApplicationIdGeneratedSms(string $mobile, string $applicationId): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_ID_GENERATED, [
+        buildSmsTemplateValue('var1', $applicationId),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+    ]);
+}
+
+function sendPaymentSuccessSms(string $mobile, string $amount, string $transactionId): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_PAYMENT_SUCCESS, [
+        buildSmsTemplateValue('var1', $amount),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+        buildSmsTemplateValue('var3', $transactionId),
+    ]);
+}
+
+function sendApplicationCompletedSms(string $mobile): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_COMPLETED, [
+        buildSmsTemplateValue('var1', getExamDisplayName()),
+    ]);
+}
+
+function sendForgotApplicationIdSms(string $mobile, string $applicationId): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_FORGOT_APPLICATION_ID, [
+        buildSmsTemplateValue('var1', $applicationId),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+    ]);
+}
+
+function sendForgotPasswordSms(string $mobile, string $password): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_FORGOT_PASSWORD, [
+        buildSmsTemplateValue('var1', $password),
+        buildSmsTemplateValue('var2', getExamDisplayName()),
+    ]);
+}
+
+function sendPlainTextEmail(string $recipient, string $subject, string $content): bool
+{
+    include_once __DIR__ . '/../class/class.phpmailer.php';
+
+    try {
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->From = 'admin@wbjeeb.in';
+        $mail->FromName = 'WBJEEB';
+        $mail->AddAddress($recipient);
+        $mail->Subject = $subject;
+        $mail->IsHTML(false);
+        $mail->Body = $content;
+
+        if (!$mail->Send()) {
+            error_log('Mailer Error: ' . $mail->ErrorInfo);
+            return false;
+        }
+
+        return true;
+    } catch (Exception $e) {
+        error_log('Mailer Exception: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function generateTemporaryPassword(): string
+{
+    $lower = 'abcdefghijkmnopqrstuvwxyz';
+    $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    $digits = '23456789';
+    $special = '!@#$%^&*-';
+    $all = $lower . $upper . $digits . $special;
+    $chars = [
+        $lower[random_int(0, strlen($lower) - 1)],
+        $upper[random_int(0, strlen($upper) - 1)],
+        $digits[random_int(0, strlen($digits) - 1)],
+        $special[random_int(0, strlen($special) - 1)],
+    ];
+
+    while (count($chars) < 10) {
+        $chars[] = $all[random_int(0, strlen($all) - 1)];
+    }
+
+    shuffle($chars);
+    return implode('', $chars);
+}
+
 function generateApplicationIdFromId(int $id): string
 {
     $numericSegmentLength = APPLICATION_ID_TOTAL_LENGTH - strlen(APPLICATION_PREFIX);
@@ -680,10 +848,13 @@ function createOtpRecord(PDO $db, string $channel, string $recipient): array
             ];
         }
 
+        $smsSent = sendMobileVerificationSms($recipient, $otp);
+
         return [
-            'success' => true,
-            'message' => 'OTP generated successfully.',
-            'display_otp' => $otp,
+            'success' => $smsSent,
+            'message' => $smsSent
+                ? 'OTP sent to mobile successfully.'
+                : 'Unable to send OTP SMS right now. Please retry.',
         ];
     } catch (Throwable $exception) {
         ensureSessionStarted();
@@ -709,48 +880,14 @@ function createOtpRecord(PDO $db, string $channel, string $recipient): array
 
 function sendEmailOtp(string $recipient, string $otp): bool
 {
-    include_once("../class/class.phpmailer.php");
-
     $subject = 'Your Email OTP for Exam Application';
     $content = "Your OTP for exam application registration is: {$otp}. It is valid for " . OTP_EXPIRY_MINUTES . " minutes.";
 
-    try {
-        $mail = new PHPMailer();
-
-        // SMTP SETTINGS (IMPORTANT)
-        $mail_1 = new PHPMailer();
-
-		$mail_1->IsSMTP();
-		
-		// REQUIRED SETTINGS
-		//$mail_1->Host = "localhost"; // try this first (IIS/Plesk often works)
-		//$mail_1->SMTPAuth = false;   // try without auth first
-		
-		$mail_1->From = "admin@wbjeeb.in";
-		$mail_1->FromName = "WBJEEB";
-		$mail_1->AddAddress($recipient);
-		
-		$mail_1->Subject = $subject;
-		$mail_1->IsHTML(false);
-		$mail_1->Body = $content;
-		
-		if (!$mail_1->Send()) {
-			error_log("Mailer Error: " . $mail_1->ErrorInfo);
-			return false;
-		}
-		
-		return true;
-		
-    } catch (Exception $e) {
-        error_log("Mailer Exception: " . $e->getMessage());
-        return false;
-    }
+    return sendPlainTextEmail($recipient, $subject, $content);
 }
 
 function sendApplicationSubmissionEmail(string $recipient, string $applicationId, string $candidateName): bool
 {
-    include_once("../class/class.phpmailer.php");
-
     $subject = 'Account Created Successfully';
     $content = "Dear {$candidateName},\n\n"
         . "Account has been created. Please login & complete all the steps.\n"
@@ -758,32 +895,11 @@ function sendApplicationSubmissionEmail(string $recipient, string $applicationId
         . "Please keep this application number for future reference.\n\n"
         . "Regards,\nWBJEEB";
 
-    try {
-        $mail = new PHPMailer();
-        $mail->IsSMTP();
-        $mail->From = "admin@wbjeeb.in";
-        $mail->FromName = "WBJEEB";
-        $mail->AddAddress($recipient);
-        $mail->Subject = $subject;
-        $mail->IsHTML(false);
-        $mail->Body = $content;
-
-        if (!$mail->Send()) {
-            error_log("Mailer Error: " . $mail->ErrorInfo);
-            return false;
-        }
-
-        return true;
-    } catch (Exception $e) {
-        error_log("Mailer Exception: " . $e->getMessage());
-        return false;
-    }
+    return sendPlainTextEmail($recipient, $subject, $content);
 }
 
 function sendFinalSubmissionConfirmationEmail(string $recipient, string $applicationId, string $candidateName): bool
 {
-    include_once("../class/class.phpmailer.php");
-
     $subject = 'Application Submitted Successfully';
     $content = "Dear {$candidateName},\n\n"
         . "Your application has been submitted successfully.\n"
@@ -791,26 +907,29 @@ function sendFinalSubmissionConfirmationEmail(string $recipient, string $applica
         . "No further changes are allowed after final submission.\n\n"
         . "Regards,\nWBJEEB";
 
-    try {
-        $mail = new PHPMailer();
-        $mail->IsSMTP();
-        $mail->From = "admin@wbjeeb.in";
-        $mail->FromName = "WBJEEB";
-        $mail->AddAddress($recipient);
-        $mail->Subject = $subject;
-        $mail->IsHTML(false);
-        $mail->Body = $content;
+    return sendPlainTextEmail($recipient, $subject, $content);
+}
 
-        if (!$mail->Send()) {
-            error_log("Mailer Error: " . $mail->ErrorInfo);
-            return false;
-        }
+function sendForgotApplicationIdEmail(string $recipient, string $applicationId, string $candidateName): bool
+{
+    $subject = 'Forgot Application ID Request';
+    $content = "Dear {$candidateName},\n\n"
+        . "Your Application ID is {$applicationId} for " . getExamDisplayName() . ".\n"
+        . "If you did not request this, please contact support immediately.\n\n"
+        . "Regards,\nWBJEEB";
 
-        return true;
-    } catch (Exception $e) {
-        error_log("Mailer Exception: " . $e->getMessage());
-        return false;
-    }
+    return sendPlainTextEmail($recipient, $subject, $content);
+}
+
+function sendForgotPasswordEmail(string $recipient, string $password, string $candidateName): bool
+{
+    $subject = 'Forgot Password Request';
+    $content = "Dear {$candidateName},\n\n"
+        . "Your password is {$password} for " . getExamDisplayName() . ".\n"
+        . "If you did not request this, please contact support immediately.\n\n"
+        . "Regards,\nWBJEEB";
+
+    return sendPlainTextEmail($recipient, $subject, $content);
 }
 
 function verifyOtpRecord(PDO $db, string $channel, string $recipient, string $otp): bool
