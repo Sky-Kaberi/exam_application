@@ -92,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'payment_admin_note' => $adminNote,
                 'id' => $applicantId,
             ]);
+            upsertApplicantProgress($db, $applicantId, ['payment_final_submitted_at' => null]);
             $messages[] = 'Payment rejected successfully.';
         }
     }
