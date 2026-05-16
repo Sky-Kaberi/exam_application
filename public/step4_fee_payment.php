@@ -21,7 +21,7 @@ if ((string) ($paymentStatusStmt->fetchColumn() ?: 'not_submitted') === 'paid') 
     exit;
 }
 
-$sbiCollectUrl = 'https://www.onlinesbi.sbi/sbicollect/icollecthome.htm';
+$sbiCollectUrl = 'https://onlinesbi.sbi.bank.in/sbicollect/icollecthome.htm?saralID=-912860120';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
