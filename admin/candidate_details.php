@@ -57,9 +57,17 @@ function sectionEnd(): string
     return '</div></div></div>';
 }
 
-function resolveApplicationStatus(array $progress): string
+function resolveApplicationStatus(array $progress, array $applicant): string
 {
-    return !empty($progress['payment_final_submitted_at']) ? 'Submitted' : 'Draft';
+    if ((string) ($applicant['payment_status'] ?? '') === 'paid') {
+        return 'Confirmed';
+    }
+
+    if (!empty($progress['payment_final_submitted_at']) || (string) ($applicant['payment_status'] ?? '') === 'pending_verification') {
+        return 'Submitted';
+    }
+
+    return 'Draft';
 }
 ?>
 <!DOCTYPE html>
@@ -162,7 +170,7 @@ function resolveApplicationStatus(array $progress): string
     <?= sectionEnd() ?>
 
     <?= sectionStart('Payment / Submission Details') ?>
-    <?= renderField('Application Status', resolveApplicationStatus($progress)) ?>
+    <?= renderField('Application Status', resolveApplicationStatus($progress, $applicant)) ?>
     <?= renderField('Payment Status', $applicant['payment_status'] ?? '') ?>
     <?= renderField('Payment Mode', $applicant['payment_mode'] ?? '') ?>
     <?= renderField('Payment Amount', $applicant['payment_amount'] ?? '') ?>

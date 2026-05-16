@@ -74,13 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string) ($currentApplicant['sbi_reference_no'] ?? '')
             );
             $completionSmsSent = sendApplicationCompletedSms((string) $currentApplicant['mobile_no']);
-            upsertApplicantProgress($db, $applicantId, ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
+            $submittedProgress = getApplicantProgress($db, $applicantId);
+            if (empty($submittedProgress['payment_final_submitted_at'])) {
+                upsertApplicantProgress($db, $applicantId, ['payment_final_submitted_at' => date('Y-m-d H:i:s')]);
+            }
             $confirmationEmailSent = sendFinalSubmissionConfirmationEmail(
                 (string) ($currentApplicant['email_id'] ?? ''),
                 (string) ($currentApplicant['application_id'] ?? ''),
                 (string) ($currentApplicant['candidate_name'] ?? '')
             );
-            $messages[] = 'Payment marked as Paid successfully.';
+            $messages[] = 'Payment approved successfully. Application status is now Confirmed.';
             if (!$paymentSmsSent || !$completionSmsSent) {
                 $messages[] = 'Payment verification SMS notification could not be sent right now. Please check SMS gateway logs.';
             }

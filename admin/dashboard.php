@@ -63,9 +63,11 @@ if (in_array($filters['payment_status'], ['not_submitted', 'pending_verification
 }
 if ($filters['application_status'] !== '') {
     if ($filters['application_status'] === 'draft') {
-        $conditions[] = 'p.payment_final_submitted_at IS NULL';
+        $conditions[] = "a.payment_status NOT IN ('paid', 'pending_verification') AND p.payment_final_submitted_at IS NULL";
     } elseif ($filters['application_status'] === 'submitted') {
-        $conditions[] = 'p.payment_final_submitted_at IS NOT NULL';
+        $conditions[] = "a.payment_status <> 'paid' AND (p.payment_final_submitted_at IS NOT NULL OR a.payment_status = 'pending_verification')";
+    } elseif ($filters['application_status'] === 'confirmed') {
+        $conditions[] = "a.payment_status = 'paid'";
     }
 }
 if ($filters['course'] !== '') {
@@ -121,7 +123,15 @@ $candidates = $listStmt->fetchAll();
 
 function applicationStatusLabel(array $row): string
 {
-    return !empty($row['payment_final_submitted_at']) ? 'Submitted' : 'Draft';
+    if ((string) ($row['payment_status'] ?? '') === 'paid') {
+        return 'Confirmed';
+    }
+
+    if (!empty($row['payment_final_submitted_at']) || (string) ($row['payment_status'] ?? '') === 'pending_verification') {
+        return 'Submitted';
+    }
+
+    return 'Draft';
 }
 
 $queryWithoutPage = $_GET;
@@ -178,6 +188,7 @@ unset($queryWithoutPage['page']);
                         <option value="">Application Status</option>
                         <option value="draft" <?= $filters['application_status'] === 'draft' ? 'selected' : '' ?>>Draft</option>
                         <option value="submitted" <?= $filters['application_status'] === 'submitted' ? 'selected' : '' ?>>Submitted</option>
+                        <option value="confirmed" <?= $filters['application_status'] === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-2"><input class="form-control" name="course" placeholder="Course / Group" value="<?= htmlspecialchars($filters['course'], ENT_QUOTES, 'UTF-8') ?>"></div>
