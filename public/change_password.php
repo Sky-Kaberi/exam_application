@@ -8,7 +8,7 @@ require_once __DIR__ . '/../includes/functions.php';
 
 $applicant = requireApplicantLoginForPage('login.php');
 $backUrl = trim((string) ($_GET['back'] ?? ''));
-if ($backUrl === '' || preg_match('/^(?:https?:)?\/\//i', $backUrl) || str_contains($backUrl, '..')) {
+if ($backUrl === '' || preg_match('/^(?:https?:)?\/\//i', $backUrl) || strpos($backUrl, '..') !== false) {
     $backUrl = 'step2.php';
 }
 ?>
