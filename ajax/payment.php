@@ -111,14 +111,15 @@ function paymentDateForResponse(?string $paymentDate, ?string $paymentDatetime):
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isApplicantFinalSubmitted($db, (int) $applicant['id'])) {
-        jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
-    }
-
     $contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
     $isJson = stripos($contentType, 'application/json') !== false;
     $payload = $isJson ? decodeJsonRequestBody() : $_POST;
     $action = (string) ($payload['action'] ?? 'submit_payment');
+    $isRejectedPaymentResubmission = $action === 'submit_payment' && $paymentStatus === 'rejected';
+
+    if (isApplicantFinalSubmitted($db, (int) $applicant['id']) && !$isRejectedPaymentResubmission) {
+        jsonResponse(['success' => false, 'message' => 'Application already submitted. No further changes are allowed.'], 422);
+    }
 
     if ($action === 'final_submit') {
         if ((string) ($application['payment_status'] ?? 'not_submitted') !== 'paid') {
@@ -261,6 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'payment_demo_flag' => 0,
         'id' => $applicant['id'],
     ]);
+    upsertApplicantProgress($db, (int) $applicant['id'], ['payment_final_submitted_at' => null]);
 
     jsonResponse([
         'success' => true,
