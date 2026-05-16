@@ -80,7 +80,7 @@ $sbiCollectUrl = 'https://onlinesbi.sbi.bank.in/sbicollect/icollecthome.htm?sara
             <h2 style="margin:0;">Step 4: Fee Payment</h2>
             <small>Application Number: <?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></small>
         </div>
-        <div><a href="../ajax/logout.php" class="secondary">Logout</a></div>
+        <div><a href="change_password.php?back=step4_fee_payment.php" class="secondary">Change Password</a> <a href="../ajax/logout.php" class="secondary">Logout</a></div>
     </div>
     <div class="body">
         <div class="box" id="paymentInfo"></div>

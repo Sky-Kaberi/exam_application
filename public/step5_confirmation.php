@@ -34,6 +34,7 @@ if ($paymentStatus !== 'paid') {
             <h1>Confirmation Receipt Pending</h1>
             <div class="alert">Once your payment is verified you will be able to view & download the confirmation receipt.</div>
             <a href="step4_fee_payment.php">Back to Fee Payment</a>
+            <a href="change_password.php?back=step4_fee_payment.php">Change Password</a>
         </div>
     </body>
     </html>
@@ -502,6 +503,7 @@ if ($paymentStatus !== 'paid') {
 <body>
 <div class="page-wrap">
     <div class="toolbar">
+        <a href="change_password.php?back=step5_confirmation.php" class="btn secondary">Change Password</a>
         <a href="../ajax/logout.php" class="btn secondary">Logout</a>
         <button id="printBtn" class="btn">Print / Download</button>
     </div>

@@ -73,6 +73,7 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
             <p>Application Number: <strong><?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></strong></p>
         </div>
         <div>
+            <a href="change_password.php?back=step2.php">Change Password</a>
             <a href="../ajax/logout.php">Logout</a>
             <a href="step3_preview.php">Step 3 Preview</a>
         </div>
