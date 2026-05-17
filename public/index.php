@@ -124,7 +124,6 @@ $captchaChallenge = createLocalCaptchaChallenge();
                         <button type="button" id="sendEmailOtp">Send Email OTP</button>
                     </div>
                     <small>By providing email ID, you agree to receive updates/notifications.</small>
-                    <small>You can verify mobile OTP and email OTP in any order.</small>
                     <div class="otp-row" style="margin-top:8px;">
                         <input type="text" name="email_otp" maxlength="6" placeholder="Enter email OTP">
                         <button type="button" class="secondary" id="verifyEmailOtp">Verify Email OTP</button>
