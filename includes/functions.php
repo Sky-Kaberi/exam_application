@@ -204,14 +204,14 @@ function sendPaymentSuccessSms(string $mobile, string $amount, string $transacti
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_PAYMENT_SUCCESS, [
         buildSmsTemplateValue('var1', $amount),
         buildSmsTemplateValue('var2', getExamDisplayName()),
-        buildSmsTemplateValue('var3', $transactionId),
+        buildSmsTemplateValue('var', $transactionId),
     ]);
 }
 
 function sendApplicationCompletedSms(string $mobile): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_COMPLETED, [
-        buildSmsTemplateValue('var1', getExamDisplayName()),
+        buildSmsTemplateValue('var', getExamDisplayName()),
     ]);
 }
 
