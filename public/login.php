@@ -38,6 +38,8 @@ $newApplicationId = trim((string) ($_GET['application_id'] ?? ($_SESSION['new_ap
         button { background:#FFA500; color:#1f2937; border:none; cursor:pointer; width:100%; }
         .error { color:#b42318; font-size:13px; min-height:18px; }
         .link { margin-top:12px; display:block; text-align:center; }
+        .create-account-link { margin-top:14px; text-align:center; }
+        .create-account-link a { color:#FFA500; font-weight:700; }
         .help-links { margin-top:14px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
         .help-links a { color:#FFA500; }
 
@@ -91,6 +93,9 @@ $newApplicationId = trim((string) ($_GET['application_id'] ?? ($_SESSION['new_ap
         <div class="error" id="loginError"></div>
         <button type="submit">Submit</button>
     </form>
+    <div class="create-account-link">
+        New applicant? <a href="index.php">Create Account</a>
+    </div>
     <div class="help-links">
         <a href="forgot_application_id.php">Forgot Application ID?</a>
         <a href="forgot_password.php<?= $newApplicationId !== '' ? '?application_id=' . urlencode($newApplicationId) : '' ?>">Forgot Password?</a>
