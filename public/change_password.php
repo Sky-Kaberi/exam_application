@@ -68,12 +68,12 @@ if ($backUrl === '' || preg_match('/^(?:https?:)?\/\//i', $backUrl) || strpos($b
 <body>
 <div class="card">
     <div class="site-brand">
-        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+        <img src="https://wbjeeb.in/JEMASPG/assets/img/West_Bengal_Joint_Entrance_Examinations_Board_Logo.png" alt="West Bengal Joint Entrance Examinations Board Logo">
         <div>
             <div class="site-brand-title">West Bengal Joint Entrance Examinations Board</div>
             <div class="site-brand-exam">JEMPAS(PG) - 2025</div>
         </div>
-        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png" alt="West Bengal Joint Entrance Examinations Board Logo">
+        <img src="https://wbjeeb.in/JEMASPG/assets/img/West_Bengal_Joint_Entrance_Examinations_Board_Logo.png" alt="West Bengal Joint Entrance Examinations Board Logo">
     </div>
     <h1>Change Password</h1>
     <p>Application Number: <strong><?= htmlspecialchars((string) $applicant['application_id'], ENT_QUOTES, 'UTF-8') ?></strong></p>
