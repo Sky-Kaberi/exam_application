@@ -23,6 +23,15 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Application - Step 2</title>
     <style>
+
+        * { box-sizing: border-box; }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        img { max-width: 100%; height: auto; }
+        input, select, textarea, button { max-width: 100%; }
+        .container, .card, .page-wrap { width: 100%; }
+        .header > div, .site-brand > div { min-width: 0; }
+        .header > div:last-child { display:flex; gap:8px; flex-wrap:wrap; }
+        h1, h2, h3, p, small, label, a, button { overflow-wrap: anywhere; }
         body { font-family: Arial, sans-serif; background:#fff8ec; margin:0; padding:18px; }
         .container { max-width: 980px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; }
         .header { background:#FFA500; color:#1f2937; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
@@ -55,6 +64,23 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
         .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
         .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
         @media (max-width:768px){ .grid{ grid-template-columns:1fr; } .header h1{font-size:20px;} }
+
+        @media (max-width:600px){
+            body { padding:10px; }
+            .content, .body { padding:14px; }
+            .header { align-items:stretch; flex-direction:column; }
+            .header > div:last-child { width:100%; }
+            .header a, .header-login-link { display:inline-flex; justify-content:center; text-align:center; white-space:normal; }
+            .site-brand { gap:8px; }
+            .site-brand img { width:42px; height:42px; flex:0 0 42px; }
+            .site-brand-title { font-size:clamp(14px, 4.4vw, 16px); }
+            .site-brand-exam { font-size:13px; }
+            h1 { font-size:22px; }
+            h2 { font-size:20px; }
+            .otp-row, .actions { flex-direction:column; }
+            .tabs { display:grid; grid-template-columns:1fr; }
+            .tab-btn { width:100%; }
+        }
     </style>
 </head>
 <body>
