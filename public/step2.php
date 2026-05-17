@@ -59,7 +59,7 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
         .info-box { background:#fff3d8; border:1px solid #e8b45b; border-radius:8px; padding:10px 12px; margin-bottom:12px; color:#9a5f00; }
         .fee-chip { display:inline-block; margin-top:8px; padding:8px 12px; border-radius:999px; background:#FFA500; color:#1f2937; font-weight:700; }
 
-        .site-brand { display:flex; align-items:center; justify-content:center; gap:12px; text-align:center; flex-wrap:wrap; }
+        .site-brand { display:grid; grid-template-columns:56px minmax(0, 1fr) 56px; align-items:center; justify-content:center; gap:12px; text-align:center; }
         .site-brand img { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:50%; padding:4px; }
         .site-brand-title { font-weight:700; font-size:18px; line-height:1.25; }
         .site-brand-exam { font-weight:700; font-size:15px; margin-top:2px; }
@@ -71,10 +71,10 @@ if (!in_array($initialTab, ['basic', 'address', 'courses', 'image'], true)) {
             .header { align-items:stretch; flex-direction:column; }
             .header > div:last-child { width:100%; }
             .header a, .header-login-link { display:inline-flex; justify-content:center; text-align:center; white-space:normal; }
-            .site-brand { gap:8px; }
-            .site-brand img { width:42px; height:42px; flex:0 0 42px; }
-            .site-brand-title { font-size:clamp(14px, 4.4vw, 16px); }
-            .site-brand-exam { font-size:13px; }
+            .site-brand { grid-template-columns:36px minmax(0, 1fr) 36px; gap:6px; }
+            .site-brand img { width:36px; height:36px; padding:3px; }
+            .site-brand-title { font-size:clamp(12px, 3.8vw, 15px); line-height:1.15; overflow-wrap:normal; }
+            .site-brand-exam { font-size:12px; }
             h1 { font-size:22px; }
             h2 { font-size:20px; }
             .otp-row, .actions { flex-direction:column; }
