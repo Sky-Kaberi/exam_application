@@ -60,6 +60,10 @@ if ($paymentStatus !== 'paid') {
         }
 
         * { box-sizing: border-box; }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        img { max-width: 100%; height: auto; }
+        .page-wrap { width: 100%; }
+        h1, h2, h3, p, small, label, a, button { overflow-wrap: anywhere; }
 
         body {
             margin: 0;
