@@ -629,7 +629,7 @@ function addressBlock(title, lines) {
         </article>`;
 }
 
-const BOARD_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/en/thumb/4/46/West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg/250px-West_Bengal_Joint_Entrance_Examinations_Board_Logo.svg.png';
+const BOARD_LOGO_URL = 'https://wbjeeb.in/JEMASPG/assets/img/West_Bengal_Joint_Entrance_Examinations_Board_Logo.png';
 const HEADER_EXAM_NAME = 'JEMPAS(PG) - 2025';
 const FOOTER_EXAM_NAME = 'JEMAS(PG) - 2025';
 const DECLARATION_TEXTS = [
