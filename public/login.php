@@ -80,7 +80,6 @@ $newApplicationId = trim((string) ($_GET['application_id'] ?? ($_SESSION['new_ap
         <div class="highlight">Your Application Number is: <?= htmlspecialchars($newApplicationId, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
     <h1>Applicant Login</h1>
-    <p>Use your Application Number and Password created in Step 1.</p>
     <form id="loginForm">
         <div class="field">
             <label>Application Number</label>
