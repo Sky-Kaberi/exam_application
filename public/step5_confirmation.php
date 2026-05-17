@@ -417,6 +417,36 @@ if ($paymentStatus !== 'paid') {
             }
         }
 
+        @media (max-width: 600px) {
+            .doc-header {
+                padding: 10px;
+            }
+
+            .board-header {
+                grid-template-columns: 36px minmax(0, 1fr) 36px;
+                gap: 6px;
+            }
+
+            .board-logo {
+                width: 36px;
+                height: 36px;
+            }
+
+            .doc-header h1 {
+                font-size: clamp(12px, 3.8vw, 15px);
+                line-height: 1.15;
+                overflow-wrap: normal;
+            }
+
+            .doc-header h2 {
+                font-size: 13px;
+            }
+
+            .doc-header p {
+                font-size: 12px;
+            }
+        }
+
         @media print {
             :root {
                 --border: #d89a21;
