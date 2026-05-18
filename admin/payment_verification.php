@@ -109,9 +109,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string) $currentApplicant['mobile_no'],
                 (string) ($currentApplicant['sbi_reference_no'] ?? '')
             );
+            $rejectionEmailSent = sendPaymentRejectedEmail(
+                (string) ($currentApplicant['email_id'] ?? ''),
+                (string) ($currentApplicant['application_id'] ?? ''),
+                (string) ($currentApplicant['candidate_name'] ?? ''),
+                (string) ($currentApplicant['sbi_reference_no'] ?? ''),
+                $adminNote
+            );
             $messages[] = 'Payment rejected successfully.';
             if (!$rejectionSmsSent) {
                 $messages[] = 'Payment rejection SMS notification could not be sent right now. Please check SMS gateway logs.';
+            }
+            if (!$rejectionEmailSent) {
+                $messages[] = 'Payment rejection email notification could not be sent right now. Please check mailer logs.';
             }
         }
     }
