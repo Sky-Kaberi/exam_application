@@ -105,7 +105,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'id' => $applicantId,
             ]);
             upsertApplicantProgress($db, $applicantId, ['payment_final_submitted_at' => null]);
+            $rejectionSmsSent = sendPaymentRejectedSms(
+                (string) $currentApplicant['mobile_no'],
+                (string) ($currentApplicant['sbi_reference_no'] ?? '')
+            );
             $messages[] = 'Payment rejected successfully.';
+            if (!$rejectionSmsSent) {
+                $messages[] = 'Payment rejection SMS notification could not be sent right now. Please check SMS gateway logs.';
+            }
         }
     }
 }
