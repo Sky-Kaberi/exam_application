@@ -928,6 +928,20 @@ function sendFinalSubmissionConfirmationEmail(string $recipient, string $applica
     return sendPlainTextEmail($recipient, $subject, $content);
 }
 
+function sendPaymentRejectedEmail(string $recipient, string $applicationId, string $candidateName, string $referenceNo, string $reason): bool
+{
+    $subject = 'Payment Rejected - Action Required';
+    $content = "Dear {$candidateName},\n\n"
+        . "Your payment submission for " . getExamDisplayName() . " has been rejected by the administrator.\n"
+        . "Application Number: {$applicationId}\n"
+        . "SBI Reference Number: " . ($referenceNo !== '' ? $referenceNo : 'Not provided') . "\n"
+        . "Rejection Reason: {$reason}\n\n"
+        . "Please login to your application, correct the payment details, and resubmit the payment receipt for verification.\n\n"
+        . "Regards,\nWBJEEB";
+
+    return sendPlainTextEmail($recipient, $subject, $content);
+}
+
 function sendForgotApplicationIdEmail(string $recipient, string $applicationId, string $candidateName): bool
 {
     $subject = 'Forgot Application ID Request';
