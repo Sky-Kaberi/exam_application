@@ -208,6 +208,14 @@ function sendPaymentSuccessSms(string $mobile, string $amount, string $transacti
     ]);
 }
 
+function sendPaymentRejectedSms(string $mobile, string $referenceNo): bool
+{
+    return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_PAYMENT_REJECTED, [
+        buildSmsTemplateValue('var1', getExamDisplayName()),
+        buildSmsTemplateValue('var2', $referenceNo),
+    ]);
+}
+
 function sendApplicationCompletedSms(string $mobile): bool
 {
     return sendWbjeebSmsBsnl($mobile, SMS_TEMPLATE_APPLICATION_COMPLETED, [
