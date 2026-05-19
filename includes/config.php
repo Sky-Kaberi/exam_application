@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+date_default_timezone_set('Asia/Kolkata');
+
 const DB_HOST = '127.0.0.1';
 const DB_NAME = 'exam_application';
 const DB_USER = 'root';
