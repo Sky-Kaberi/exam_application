@@ -10,7 +10,7 @@ $isCli = PHP_SAPI === 'cli';
 function outputMessage(string $message, bool $isCli, int $httpCode = 200): void
 {
     if ($isCli) {
-        echo $message;
+        echo $message . PHP_EOL;
         return;
     }
 
@@ -19,43 +19,19 @@ function outputMessage(string $message, bool $isCli, int $httpCode = 200): void
     echo json_encode(['message' => $message], JSON_UNESCAPED_SLASHES) ?: '{"message":"Unable to encode response."}';
 }
 
-function findMySqlDumpBinary(): ?string
+function writeLog(string $logFile, string $message): void
 {
-    $candidates = [
-        'mysqldump',
-        '/usr/bin/mysqldump',
-        '/usr/local/mysql/bin/mysqldump',
-        '/opt/plesk/mysql/8.0/bin/mysqldump',
-        '/opt/plesk/mysql/5.7/bin/mysqldump',
-        '/opt/plesk/mysql/5.6/bin/mysqldump',
-        '/usr/bin/mariadb-dump',
-    ];
-
-    foreach ($candidates as $candidate) {
-        if ($candidate === 'mysqldump') {
-            $resolved = trim((string) shell_exec('command -v mysqldump 2>/dev/null'));
-            if ($resolved !== '') {
-                return $resolved;
-            }
-            continue;
-        }
-
-        if (is_file($candidate) && is_executable($candidate)) {
-            return $candidate;
-        }
-    }
-
-    return null;
+    @file_put_contents($logFile, '[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL, FILE_APPEND);
 }
 
-if ($isCli) {
-    $options = getopt('', ['backup-dir::', 'retention-days::']);
-} else {
-    $options = [
+$options = $isCli
+    ? getopt('', ['backup-dir::', 'retention-days::'])
+    : [
         'backup-dir' => isset($_REQUEST['backup_dir']) ? (string) $_REQUEST['backup_dir'] : null,
         'retention-days' => isset($_REQUEST['retention_days']) ? (string) $_REQUEST['retention_days'] : null,
     ];
 
+if (!$isCli) {
     $webToken = defined('BACKUP_WEB_TOKEN') ? (string) BACKUP_WEB_TOKEN : '';
     $requestToken = isset($_REQUEST['token']) ? (string) $_REQUEST['token'] : '';
 
@@ -87,58 +63,110 @@ if (!is_writable($backupDir)) {
     exit(1);
 }
 
-$dumpBinary = findMySqlDumpBinary();
-if ($dumpBinary === null) {
-    outputMessage('mysqldump not found. Install MySQL client tools or use mariadb-dump.', $isCli, 500);
+$logFile = rtrim($backupDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'backup.log';
+$timestamp = date('Y-m-d_H-i-s');
+$sqlFile = rtrim($backupDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . DB_NAME . '_' . $timestamp . '.sql';
+$gzFile = $sqlFile . '.gz';
+
+$mysqli = @new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+if ($mysqli->connect_error) {
+    writeLog($logFile, 'ERROR: DB connection failed: ' . $mysqli->connect_error);
+    outputMessage('ERROR: DB connection failed: ' . $mysqli->connect_error, $isCli, 500);
+    exit(1);
+}
+$mysqli->set_charset('utf8mb4');
+
+$fh = fopen($sqlFile, 'wb');
+if (!$fh) {
+    writeLog($logFile, 'ERROR: Could not create SQL backup file.');
+    outputMessage('ERROR: Could not create SQL backup file.', $isCli, 500);
     exit(1);
 }
 
-$timestamp = date('Ymd_His');
-$filename = sprintf('%s_%s.sql.gz', DB_NAME, $timestamp);
-$backupFile = rtrim($backupDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+fwrite($fh, "-- Database Backup\n");
+fwrite($fh, "-- Database: `" . DB_NAME . "`\n");
+fwrite($fh, '-- Generated: ' . date('Y-m-d H:i:s') . "\n\n");
+fwrite($fh, "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n");
+fwrite($fh, "SET AUTOCOMMIT = 0;\n");
+fwrite($fh, "START TRANSACTION;\n");
+fwrite($fh, "SET time_zone = \"+00:00\";\n\n");
+fwrite($fh, "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n");
+fwrite($fh, "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n");
+fwrite($fh, "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n");
+fwrite($fh, "/*!40101 SET NAMES utf8mb4 */;\n\n");
 
-$command = sprintf(
-    '%s --host=%s --user=%s --password=%s --single-transaction --quick --routines --triggers %s | gzip > %s',
-    escapeshellarg($dumpBinary),
-    escapeshellarg(DB_HOST),
-    escapeshellarg(DB_USER),
-    escapeshellarg(DB_PASS),
-    escapeshellarg(DB_NAME),
-    escapeshellarg($backupFile)
-);
-
-$descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-$process = proc_open($command, $descriptors, $pipes);
-
-if (!is_resource($process)) {
-    outputMessage('Unable to start database dump process.', $isCli, 500);
+$tablesRes = $mysqli->query('SHOW TABLES');
+if (!$tablesRes) {
+    fclose($fh);
+    @unlink($sqlFile);
+    writeLog($logFile, 'ERROR: Could not list tables: ' . $mysqli->error);
+    outputMessage('ERROR: Could not list tables: ' . $mysqli->error, $isCli, 500);
     exit(1);
 }
 
-fclose($pipes[0]);
-$stdout = stream_get_contents($pipes[1]);
-fclose($pipes[1]);
-$stderr = stream_get_contents($pipes[2]);
-fclose($pipes[2]);
-$exitCode = proc_close($process);
+while ($tableRow = $tablesRes->fetch_array(MYSQLI_NUM)) {
+    $table = (string) $tableRow[0];
 
-if ($exitCode !== 0) {
-    if (is_file($backupFile)) {
-        @unlink($backupFile);
+    $createRes = $mysqli->query('SHOW CREATE TABLE `' . $mysqli->real_escape_string($table) . '`');
+    if ($createRes) {
+        $createRow = $createRes->fetch_assoc();
+        fwrite($fh, "-- Table structure for table `{$table}`\n");
+        fwrite($fh, "DROP TABLE IF EXISTS `{$table}`;\n");
+        fwrite($fh, $createRow['Create Table'] . ";\n\n");
+        $createRes->free();
     }
 
-    $details = [];
-    if (is_string($stderr) && trim($stderr) !== '') {
-        $details[] = trim($stderr);
-    }
-    if (is_string($stdout) && trim($stdout) !== '') {
-        $details[] = trim($stdout);
-    }
+    $dataRes = $mysqli->query('SELECT * FROM `' . $mysqli->real_escape_string($table) . '`');
+    if ($dataRes) {
+        fwrite($fh, "-- Dumping data for table `{$table}`\n");
+        while ($row = $dataRes->fetch_assoc()) {
+            $columns = array_map(static fn($col): string => '`' . str_replace('`', '``', (string) $col) . '`', array_keys($row));
+            $values = array_map(static function ($val) use ($mysqli): string {
+                return $val === null ? 'NULL' : "'" . $mysqli->real_escape_string((string) $val) . "'";
+            }, array_values($row));
 
-    $message = 'Database backup failed.' . (count($details) > 0 ? ' ' . implode(' ', $details) : '');
-    outputMessage($message, $isCli, 500);
-    exit($exitCode);
+            fwrite($fh, 'INSERT INTO `' . $table . '` (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ");\n");
+        }
+        fwrite($fh, "\n");
+        $dataRes->free();
+    }
 }
+$tablesRes->free();
+
+fwrite($fh, "COMMIT;\n");
+fwrite($fh, "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n");
+fwrite($fh, "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n");
+fwrite($fh, "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
+
+fclose($fh);
+$mysqli->close();
+
+$in = fopen($sqlFile, 'rb');
+$out = gzopen($gzFile, 'wb9');
+if (!$in || !$out) {
+    if (is_resource($in)) {
+        fclose($in);
+    }
+    if (is_resource($out)) {
+        gzclose($out);
+    }
+    @unlink($gzFile);
+    writeLog($logFile, 'ERROR: Could not create gzip file.');
+    outputMessage('ERROR: Could not create gzip file.', $isCli, 500);
+    exit(1);
+}
+
+while (!feof($in)) {
+    $chunk = fread($in, 8192);
+    if ($chunk === false) {
+        break;
+    }
+    gzwrite($out, $chunk);
+}
+
+fclose($in);
+gzclose($out);
+@unlink($sqlFile);
 
 if ($retentionDays > 0) {
     $cutoffTimestamp = strtotime('-' . $retentionDays . ' days');
@@ -149,5 +177,6 @@ if ($retentionDays > 0) {
     }
 }
 
-outputMessage("Backup created successfully: {$backupFile}", $isCli);
+writeLog($logFile, 'Backup created successfully: ' . $gzFile);
+outputMessage('Backup created successfully: ' . $gzFile, $isCli);
 exit(0);
