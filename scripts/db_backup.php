@@ -120,7 +120,9 @@ while ($tableRow = $tablesRes->fetch_array(MYSQLI_NUM)) {
     if ($dataRes) {
         fwrite($fh, "-- Dumping data for table `{$table}`\n");
         while ($row = $dataRes->fetch_assoc()) {
-            $columns = array_map(static fn($col): string => '`' . str_replace('`', '``', (string) $col) . '`', array_keys($row));
+            $columns = array_map(static function ($col): string {
+                return '`' . str_replace('`', '``', (string) $col) . '`';
+            }, array_keys($row));
             $values = array_map(static function ($val) use ($mysqli): string {
                 return $val === null ? 'NULL' : "'" . $mysqli->real_escape_string((string) $val) . "'";
             }, array_values($row));
