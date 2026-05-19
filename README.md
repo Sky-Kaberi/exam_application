@@ -51,3 +51,21 @@ Example cron entry (daily at 2:30 AM):
 Options:
 - `--backup-dir` (optional): destination directory for backup files. Defaults to `backups/` in the project root.
 - `--retention-days` (optional): delete backup files older than this many days. Default is `7`. Use `0` to skip cleanup.
+
+## Browser-triggered backup (Plesk friendly)
+You can run the same script from a browser/URL if CLI access is limited.
+
+1. Set a secure token in `includes/config.php`:
+   - `BACKUP_WEB_TOKEN = 'replace_with_long_random_secret';`
+2. Open URL:
+   - `/scripts/db_backup.php?token=YOUR_TOKEN`
+3. Optional URL params:
+   - `backup_dir=/full/path/to/backups`
+   - `retention_days=14`
+
+Example:
+```text
+https://your-domain.com/scripts/db_backup.php?token=YOUR_TOKEN&retention_days=14
+```
+
+> Important: keep the token secret and prefer HTTPS only.
