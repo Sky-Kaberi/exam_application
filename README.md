@@ -39,3 +39,15 @@ This scaffold uses a built-in math CAPTCHA (no third-party dependency). The chal
 Run `sql/migrations/20260408_add_admin_users.sql` to create `admin_users` and seed a default admin.
 
 > Important: replace the seeded password hash with your own `password_hash(...)` generated value before production use.
+
+## Database backup via cron
+Use `scripts/db_backup.php` to create compressed MySQL backups (`.sql.gz`) for scheduled jobs.
+
+Example cron entry (daily at 2:30 AM):
+```cron
+30 2 * * * /usr/bin/php /path/to/exam_application/scripts/db_backup.php --backup-dir=/path/to/exam_application/backups --retention-days=14 >> /path/to/exam_application/logs/backup.log 2>&1
+```
+
+Options:
+- `--backup-dir` (optional): destination directory for backup files. Defaults to `backups/` in the project root.
+- `--retention-days` (optional): delete backup files older than this many days. Default is `7`. Use `0` to skip cleanup.
